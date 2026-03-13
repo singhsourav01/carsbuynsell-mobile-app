@@ -59,7 +59,7 @@ export default function Dashboard() {
       try {
         setLoading(true)
         // Using the full URL as provided by the user to ensure it works regardless of baseURL config
-        const response = await apiClient.get('http://localhost:8002/user/admin/dashboard')
+        const response = await apiClient.get('http://13.201.55.131:3002/user/admin/dashboard')
         if (response.data.success) {
           setData(response.data.data)
         } else {

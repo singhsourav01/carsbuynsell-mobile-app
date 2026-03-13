@@ -137,7 +137,7 @@ export default function Listings() {
     try {
       setIsLoadingListings(true)
 
-      const response = await apiClient.get('http://localhost:8002/user/listings')
+      const response = await apiClient.get('http://13.201.55.131:3002/user/listings')
 
       const raw = response.data
 
@@ -160,7 +160,7 @@ export default function Listings() {
   const fetchCategories = async () => {
     try {
       setIsLoadingCategories(true)
-      const response = await apiClient.get('http://localhost:8002/user/categories')
+      const response = await apiClient.get('http://13.201.55.131:3002/user/categories')
       const data = response.data.data?.categories || response.data.data || []
       if (Array.isArray(data)) {
         setCategories(data.map((c: any) => ({
@@ -186,8 +186,8 @@ export default function Listings() {
       setIsLoadingUsers(true)
 
       const url = search
-        ? `http://localhost:8002/user/users?search=${search}`
-        : `http://localhost:8002/user/users`
+        ? `http://13.201.55.131:3002/user/users?search=${search}`
+        : `http://13.201.55.131:3002/user/users`
 
       const response = await apiClient.get(url)
 
@@ -242,7 +242,7 @@ export default function Listings() {
       setIsCreating(true)
 
       // 1. Create the listing with seller_id as param
-      const createResponse = await apiClient.post(`http://localhost:8002/user/listings?seller_id=${selectedUser.user_id}`, formData)
+      const createResponse = await apiClient.post(`http://13.201.55.131:3002/user/listings?user_id=${selectedUser.user_id}`, formData)
       const listingId = createResponse.data.data?.lst_id || createResponse.data.data?.id
 
       if (!listingId) {

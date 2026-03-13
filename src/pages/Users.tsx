@@ -118,7 +118,7 @@ export default function Users() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true)
-      const response = await apiClient.get('http://localhost:8002/user/users')
+      const response = await apiClient.get('http://13.201.55.131:3002/user/users')
       const raw = response.data
       const usersArray = raw?.data?.data || raw?.data || raw?.users || []
 
