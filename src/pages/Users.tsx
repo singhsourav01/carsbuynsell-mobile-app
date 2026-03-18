@@ -3,12 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { DataTable } from '@/components/DataTable'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import StatusBadge from '@/components/StatusBadge'
 import { ColumnDef } from '@tanstack/react-table'
-import dayjs from 'dayjs'
 import { toast } from 'sonner'
-import { Eye, Check, X, Ban, Loader2 } from 'lucide-react'
+import { Eye, Check, X, Ban, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { apiClient } from '@/services/api-client'
+
+interface PaginationInfo {
+  totalPages: number
+  currentPage: number
+  pageSize: number
+  next: string | null
+  prev: string | null
+}
 
 export interface User {
   user_id: string
@@ -114,15 +120,21 @@ export default function Users() {
 
   const [users, setUsers] = useState<User[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null)
+  const pageSize = 10
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page: number = 1) => {
     try {
       setIsLoading(true)
-      const response = await apiClient.get('http://13.201.55.131:3002/user/users')
+      const response = await apiClient.get(`http://13.127.188.130:3002/user/users?page=${page}&page_size=${pageSize}`)
       const raw = response.data
       const usersArray = raw?.data?.data || raw?.data || raw?.users || []
+      const paginationData = raw?.data?.link || null
 
       setUsers(Array.isArray(usersArray) ? usersArray : [])
+      setPagination(paginationData)
+      setCurrentPage(page)
     } catch (error) {
       console.error('Failed to fetch users:', error)
       toast.error('Failed to load users data')
@@ -131,8 +143,20 @@ export default function Users() {
     }
   }
 
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      fetchUsers(currentPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (pagination && currentPage < pagination.totalPages) {
+      fetchUsers(currentPage + 1)
+    }
+  }
+
   useEffect(() => {
-    fetchUsers()
+    fetchUsers(1)
   }, [])
 
   const statusFilters = ['All', 'Pending', 'Accepted', 'Rejected', 'Blocked']
@@ -171,12 +195,42 @@ export default function Users() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={filteredUsers}
-          searchKey="user_full_name"
-          searchPlaceholder="Search users..."
-        />
+        <>
+          <DataTable
+            columns={columns}
+            data={filteredUsers}
+            searchKey="user_full_name"
+            searchPlaceholder="Search users..."
+          />
+
+          {pagination && (
+            <div className="flex items-center justify-between border-t pt-4">
+              <p className="text-sm text-gray-500">
+                Page {currentPage} of {pagination.totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage <= 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={currentPage >= pagination.totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

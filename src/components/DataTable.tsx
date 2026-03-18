@@ -120,11 +120,8 @@ export function DataTable<TData, TValue>({
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="text-sm text-gray-500">
-          Page {table.getState().pagination.pageIndex + 1} of{' '}
-          {table.getPageCount()}
-        </div>
-        <div className="flex items-center gap-2">
+    
+        {/* <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -157,7 +154,7 @@ export function DataTable<TData, TValue>({
           >
             <ChevronsRight className="h-4 w-4" />
           </Button>
-        </div>
+        </div> */}
       </div>
     </div>
   )

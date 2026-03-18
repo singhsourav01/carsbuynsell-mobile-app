@@ -34,13 +34,13 @@ export default function Navbar() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
       <div className="flex items-center gap-4 flex-1 max-w-md">
-        <div className="relative w-full">
+        {/* <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search..."
             className="pl-9 bg-surface border-gray-200"
           />
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center gap-4">
