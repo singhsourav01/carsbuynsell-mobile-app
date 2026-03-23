@@ -29,7 +29,11 @@ import {
 import { Label } from '@/components/ui/label'
 import { apiClient } from '@/services/api-client'
 import { CreateListingPayload, Listing } from '@/types/listing-types'
+import axios from 'axios'
 
+// Temporary token for file upload - replace with proper auth later
+const TEMP_FILE_UPLOAD_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjc4NmQwMWUtZDY0NC00ZmFlLTgzMjMtMTlmZjI4MDAzYWY1IiwiZW1haWwiOiJjY2NAZ21haWwuY29tIiwiZnVsbF9uYW1lIjoiQ2NjIiwicGhvbmUiOiIxMjEyMTIxMjEyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzM4NTM4NTksImV4cCI6MTc3NDQ1ODY1OX0.Fg3t0MO-ru42hDFWjoKJVV-LYJRl3gGE2s0V0uBaeyVloSORzTWeXe3zEB6MMroATWtWvE2bL2Ia5nWz-t2Ev884XnpkyEW8P1gEgoKieWxEGXeZuZcYad6Ir7PxbJHgW9snBS96ZQufSJrHPSxVuSKRDZLD5gEnBwSIh6PqLURooryQZYS9DzNM-qA0UmgXt2X5_FCwa4zZwThnTYXdzwdtOUq8M-em1KlxT1OuSdMfkCt-6oxWBF6W9DzkGJM-WORji0Tin_YzIVdfgDx2Bi3bNpwcR_xQre7EGO7yf5a4psQynYs9NdBmxgSapsNADeBJb3zfVKcRAu-cpfU2gDbyqQYlZjBD9Rc3u-o5rwXU7q-Qf-EHiKT2GVi9B70Mw06VvgiRRCQ752iQvSE7vtkMbX9Fy6Nyz5XGTXXV75syZJPoIZkwe1B2nUxYANXacngen0r78iUPPkF56s45HBb-oQXM7IgFHir4w0N2dMfXr7JppAy1dSNe7dVRU5inAL1hi3Zm-BanAIbYCLjwbNkWS3VXhFRWqQrPf8Q5tF9AwKZxQW1CbGSjg-YqBMwjOStI-amvKqPTSKD9UKXP8pK8CzRWrdA1qARbvHUdkt53AoHgLdNlSCpZO6TNEqqAdQ2LPsBIxcaM1aJC7uGQJTNuXKR7YgfIDo5KaggI4cM'
+const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file/upload'
 const columns: ColumnDef<Listing>[] = [
   {
     accessorKey: 'lst_title',
@@ -108,6 +112,10 @@ export default function Listings() {
   const [createOpen, setCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
 
+
+  const [listingImages, setListingImages] = useState<File[]>([])
+  const [, setUploadingImages] = useState(false)
+  
   // Real Data State
   const [listings, setListings] = useState<Listing[]>([])
   const [isLoadingListings, setIsLoadingListings] = useState(true)
@@ -130,8 +138,6 @@ export default function Listings() {
     lst_auction_end: '',
     lst_min_increment: 0,
   })
-
-  const [imageUrls, setImageUrls] = useState<string>('')
 
   const fetchListings = async () => {
     try {
@@ -238,48 +244,91 @@ export default function Listings() {
       return
     }
 
+try {
+  setIsCreating(true)
+
+  let imageIds: string[] = []
+
+  // STEP 1: Upload images first
+  if (listingImages.length > 0) {
     try {
-      setIsCreating(true)
+      setUploadingImages(true)
 
-      // 1. Create the listing with seller_id as param
-      const createResponse = await apiClient.post(`http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`, formData)
-      const listingId = createResponse.data.data?.lst_id || createResponse.data.data?.id
+      const formDataUpload = new FormData()
 
-      if (!listingId) {
-        throw new Error('Failed to get listing ID from response')
-      }
-
-      // 2. Add images if any
-      if (imageUrls.trim()) {
-        const urls = imageUrls.split('\n').map(u => u.trim()).filter(u => u)
-        if (urls.length > 0) {
-          await apiClient.post(`/user/listings/${listingId}/images`, { urls })
-        }
-      }
-
-      toast.success('Listing created successfully! Status: DRAFT')
-      setCreateOpen(false)
-      // Reset form
-      setFormData({
-        lst_title: '',
-        lst_description: '',
-        lst_category_id: '',
-        lst_type: 'BUY_NOW',
-        lst_price: 0,
-        lst_auction_end: '',
-        lst_min_increment: 0,
+      listingImages.forEach((file) => {
+        formDataUpload.append("files", file)
       })
-      setImageUrls('')
-      setSelectedUser(null)
-      setUserSearch('')
-      setShowUserDropdown(false)
-      fetchListings()
-    } catch (error: any) {
-      console.error('Error creating listing:', error)
-      toast.error(error.response?.data?.message || 'Failed to create listing')
-    } finally {
-      setIsCreating(false)
+
+      formDataUpload.append("type", "portfolio")
+
+      const uploadResponse = await axios.post(`${FILE_SERVICE_URL}?id=${selectedUser.user_id}`, formDataUpload, {
+        headers: {
+          'Authorization': `Bearer ${TEMP_FILE_UPLOAD_TOKEN}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      imageIds = uploadResponse.data.data.map(
+        (file: any) => file.file_id
+      )
+
+    } catch (error) {
+      toast.error("Failed to upload images")
+      setUploadingImages(false)
+      return
     }
+
+    setUploadingImages(false)
+  }
+
+  // STEP 2: Create listing WITH images
+  const createResponse = await apiClient.post(
+    `http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`,
+    {
+      ...formData,
+      user_portfolio: imageIds
+    }
+  )
+
+  console.log(createResponse.data, " here is create response")
+
+  toast.success("Listing created successfully! Status: ACTIVE")
+
+  setCreateOpen(false)
+
+  // Reset form
+  setFormData({
+    lst_title: '',
+    lst_description: '',
+    lst_category_id: '',
+    lst_type: 'BUY_NOW',
+    lst_price: 0,
+    lst_auction_end: '',
+    lst_min_increment: 0,
+  })
+
+  setListingImages([])
+  setSelectedUser(null)
+  setUserSearch('')
+  setShowUserDropdown(false)
+
+  fetchListings()
+
+} catch (error: any) {
+
+  console.error('Error creating listing:', error)
+
+  toast.error(
+    error.response?.data?.message ||
+    'Failed to create listing'
+  )
+
+} finally {
+
+  setIsCreating(false)
+
+}
   }
 
   const filteredListings = listings.filter((listing) => {
@@ -521,13 +570,32 @@ export default function Listings() {
 
               <div className="grid gap-2">
                 <Label htmlFor="image_urls">Image URLs (one per line)</Label>
-                <Textarea
-                  id="image_urls"
-                  placeholder="https://image1.jpg&#10;https://image2.jpg"
-                  className="h-24"
-                  value={imageUrls}
-                  onChange={(e) => setImageUrls(e.target.value)}
-                />
+                <div className="grid gap-2">
+                  <Label>Upload Images</Label>
+
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={(e) => {
+                      if (!e.target.files) return
+                      setListingImages(Array.from(e.target.files))
+                    }}
+                  />
+
+                  {listingImages.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {listingImages.map((file, i) => (
+                        <div
+                          key={i}
+                          className="text-xs px-2 py-1 bg-gray-100 rounded"
+                        >
+                          {file.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <DialogFooter>

@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth-store'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -10,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Bell, Search, LogOut, User as UserIcon, Settings } from 'lucide-react'
+import { Bell, LogOut, User as UserIcon, Settings } from 'lucide-react'
 
 export default function Navbar() {
   const navigate = useNavigate()

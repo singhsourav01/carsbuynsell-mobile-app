@@ -6,6 +6,19 @@ export interface CreateListingPayload {
     lst_price: number
     lst_auction_end?: string
     lst_min_increment?: number
+    user_portfolio?: UploadedPortfolioFile[]
+}
+
+export interface UploadedPortfolioFile {
+    file_id: string
+    file_uploaded_by_id: string
+    file_upload_type: string
+    file_is_deleted: boolean
+    file_media_type: string
+    file_url: string
+    file_created_at: string
+    file_updated_at: string
+    file_thumbnail_url: string | null
 }
 
 export interface ListingImagePayload {
