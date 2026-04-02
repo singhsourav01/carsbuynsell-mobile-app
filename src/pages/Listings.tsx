@@ -28,11 +28,11 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { apiClient } from '@/services/api-client'
-import { CreateListingPayload, Listing } from '@/types/listing-types'
+import { CreateListingPayload, Listing, VehicleDetailsPayload } from '@/types/listing-types'
 import axios from 'axios'
 
 // Temporary token for file upload - replace with proper auth later
-const TEMP_FILE_UPLOAD_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjc4NmQwMWUtZDY0NC00ZmFlLTgzMjMtMTlmZjI4MDAzYWY1IiwiZW1haWwiOiJjY2NAZ21haWwuY29tIiwiZnVsbF9uYW1lIjoiQ2NjIiwicGhvbmUiOiIxMjEyMTIxMjEyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzM4NTM4NTksImV4cCI6MTc3NDQ1ODY1OX0.Fg3t0MO-ru42hDFWjoKJVV-LYJRl3gGE2s0V0uBaeyVloSORzTWeXe3zEB6MMroATWtWvE2bL2Ia5nWz-t2Ev884XnpkyEW8P1gEgoKieWxEGXeZuZcYad6Ir7PxbJHgW9snBS96ZQufSJrHPSxVuSKRDZLD5gEnBwSIh6PqLURooryQZYS9DzNM-qA0UmgXt2X5_FCwa4zZwThnTYXdzwdtOUq8M-em1KlxT1OuSdMfkCt-6oxWBF6W9DzkGJM-WORji0Tin_YzIVdfgDx2Bi3bNpwcR_xQre7EGO7yf5a4psQynYs9NdBmxgSapsNADeBJb3zfVKcRAu-cpfU2gDbyqQYlZjBD9Rc3u-o5rwXU7q-Qf-EHiKT2GVi9B70Mw06VvgiRRCQ752iQvSE7vtkMbX9Fy6Nyz5XGTXXV75syZJPoIZkwe1B2nUxYANXacngen0r78iUPPkF56s45HBb-oQXM7IgFHir4w0N2dMfXr7JppAy1dSNe7dVRU5inAL1hi3Zm-BanAIbYCLjwbNkWS3VXhFRWqQrPf8Q5tF9AwKZxQW1CbGSjg-YqBMwjOStI-amvKqPTSKD9UKXP8pK8CzRWrdA1qARbvHUdkt53AoHgLdNlSCpZO6TNEqqAdQ2LPsBIxcaM1aJC7uGQJTNuXKR7YgfIDo5KaggI4cM'
+const TEMP_FILE_UPLOAD_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjc4NmQwMWUtZDY0NC00ZmFlLTgzMjMtMTlmZjI4MDAzYWY1IiwiZW1haWwiOiJjY2NAZ21haWwuY29tIiwiZnVsbF9uYW1lIjoiQ2NjIiwicGhvbmUiOiIxMjEyMTIxMjEyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzQ2NDM2OTEsImV4cCI6MTc3NTI0ODQ5MX0.fBQOBFSXrHmDGNmKto47sYqQLskDL8yGdHmVvyQXgvXzXKd8ho0TohEPR9UasKmWnjWOHXm7Tbmv5zajF6rBtCSul7G6mjQHWZiciTeSc202oVo803sSsAJpWBqYeepG2z2MSNyID8PVtd3pi1vW9PLaisDU1WLb8ryQkJG24YQiMheHXtIFpJo3X6GzE-h0YkBFyf_82MAMc08xgP22T7MxFDsfHFCX62KfVQz_zGxActZNZbrClWBsh2oOmHHaz4sXPvgRqQlb7f-Qxr__7VAkFsUECx6p-jyV9KGkVSRCiJbFGp0nRUqX3mH2LYpzcizqNHhrDHsJyC7zM50XjMU_QAMIOGAzWzpp06la7Zu_qjhWbztidxISvLjtJkZJEkkd_SlzIpl5NkF5YbdBvGfEdfXnUIy6Y75i_OdrUvDzfG6gKU6CEwne0LkGS3Ph0-RA3cy9SR10aJphNAriDd5gat31tXUwKPoHFoB3m5eUvJUPFA_k8GVmT0u-uL1JDMuAKZZeikfs6qvjJvY9HbmEy4YB8BSPnOHmGocPSFbSvHWs3EiRYu81h4h3_jnXvPloBNt7oPCvf7THL2Y4zjKMv3eoMQjKF8iUNS5v0R_pd9CUOd7zW0Dm8rEOHqAagG3MK7_Rqz8CkYLxJxwBaKEU6KlZ7DOsWR3YSmubg6w'
 const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file/upload'
 const columns: ColumnDef<Listing>[] = [
   {
@@ -137,6 +137,21 @@ export default function Listings() {
     lst_price: 0,
     lst_auction_end: '',
     lst_min_increment: 0,
+  })
+  const [vehicleDetails, setVehicleDetails] = useState<{
+    fuel_type: '' | NonNullable<VehicleDetailsPayload['fuel_type']>
+    transmission: '' | NonNullable<VehicleDetailsPayload['transmission']>
+    body_type: '' | NonNullable<VehicleDetailsPayload['body_type']>
+    ownership: '' | NonNullable<VehicleDetailsPayload['ownership']>
+    year: number | ''
+    kilometers: number | ''
+  }>({
+    fuel_type: '',
+    transmission: '',
+    body_type: '',
+    ownership: '',
+    year: '',
+    kilometers: '',
   })
 
   const fetchListings = async () => {
@@ -282,13 +297,39 @@ try {
     setUploadingImages(false)
   }
 
-  // STEP 2: Create listing WITH images
+  // STEP 2: Create listing with backend-expected payload shape
+  const payload: CreateListingPayload = {
+    ...formData,
+    user_portfolio: imageIds,
+  }
+
+  if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
+    payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
+  }
+
+  if (payload.lst_type !== 'AUCTION') {
+    payload.lst_auction_end = undefined
+    payload.lst_min_increment = undefined
+  }
+
+  const normalizedVehicleDetails: VehicleDetailsPayload = {
+    fuel_type: vehicleDetails.fuel_type || undefined,
+    transmission: vehicleDetails.transmission || undefined,
+    body_type: vehicleDetails.body_type || undefined,
+    ownership: vehicleDetails.ownership || undefined,
+    year: vehicleDetails.year === '' ? undefined : Number(vehicleDetails.year),
+    kilometers: vehicleDetails.kilometers === '' ? undefined : Number(vehicleDetails.kilometers),
+  }
+
+  const hasVehicleDetails = Object.values(normalizedVehicleDetails).some((value) => value !== undefined)
+
+  if (hasVehicleDetails) {
+    payload.vehicle_details = normalizedVehicleDetails
+  }
+
   const createResponse = await apiClient.post(
     `http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`,
-    {
-      ...formData,
-      user_portfolio: imageIds
-    }
+    payload
   )
 
   console.log(createResponse.data, " here is create response")
@@ -306,6 +347,14 @@ try {
     lst_price: 0,
     lst_auction_end: '',
     lst_min_increment: 0,
+  })
+  setVehicleDetails({
+    fuel_type: '',
+    transmission: '',
+    body_type: '',
+    ownership: '',
+    year: '',
+    kilometers: '',
   })
 
   setListingImages([])
@@ -595,6 +644,105 @@ try {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+
+              <div className="grid gap-4 border rounded-md p-4">
+                <Label className="text-sm font-semibold">Vehicle Details (optional)</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Fuel Type</Label>
+                    <Select
+                      value={vehicleDetails.fuel_type}
+                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, fuel_type: value as NonNullable<VehicleDetailsPayload['fuel_type']> })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select fuel type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="PETROL">Petrol</SelectItem>
+                        <SelectItem value="DIESEL">Diesel</SelectItem>
+                        <SelectItem value="CNG">CNG</SelectItem>
+                        <SelectItem value="ELECTRIC">Electric</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Transmission</Label>
+                    <Select
+                      value={vehicleDetails.transmission}
+                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, transmission: value as NonNullable<VehicleDetailsPayload['transmission']> })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select transmission" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MANUAL">Manual</SelectItem>
+                        <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Body Type</Label>
+                    <Select
+                      value={vehicleDetails.body_type}
+                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, body_type: value as NonNullable<VehicleDetailsPayload['body_type']> })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select body type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SEDAN">Sedan</SelectItem>
+                        <SelectItem value="MUV">MUV</SelectItem>
+                        <SelectItem value="SUV">SUV</SelectItem>
+                        <SelectItem value="LUXURY">Luxury</SelectItem>
+                        <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Ownership</Label>
+                    <Select
+                      value={vehicleDetails.ownership}
+                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, ownership: value as NonNullable<VehicleDetailsPayload['ownership']> })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ownership" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="FIRST_OWNER">First owner</SelectItem>
+                        <SelectItem value="SECOND_OWNER">Second owner</SelectItem>
+                        <SelectItem value="THIRD_OWNER">Third owner</SelectItem>
+                        <SelectItem value="FOURTH_OWNER_PLUS">Fourth owner+</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="vehicle_year">Year</Label>
+                    <Input
+                      id="vehicle_year"
+                      type="number"
+                      placeholder="e.g. 2021"
+                      value={vehicleDetails.year}
+                      onChange={(e) => setVehicleDetails({ ...vehicleDetails, year: e.target.value ? Number(e.target.value) : '' })}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="vehicle_kilometers">Kilometers</Label>
+                    <Input
+                      id="vehicle_kilometers"
+                      type="number"
+                      placeholder="e.g. 35000"
+                      value={vehicleDetails.kilometers}
+                      onChange={(e) => setVehicleDetails({ ...vehicleDetails, kilometers: e.target.value ? Number(e.target.value) : '' })}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

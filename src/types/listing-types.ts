@@ -6,7 +6,17 @@ export interface CreateListingPayload {
     lst_price: number
     lst_auction_end?: string
     lst_min_increment?: number
-    user_portfolio?: UploadedPortfolioFile[]
+    vehicle_details?: VehicleDetailsPayload
+    user_portfolio?: UploadedPortfolioFile[] | string[]
+}
+
+export interface VehicleDetailsPayload {
+    fuel_type?: 'PETROL' | 'DIESEL' | 'CNG' | 'ELECTRIC'
+    transmission?: 'MANUAL' | 'AUTOMATIC'
+    body_type?: 'SEDAN' | 'MUV' | 'SUV' | 'LUXURY' | 'HATCHBACK'
+    ownership?: 'FIRST_OWNER' | 'SECOND_OWNER' | 'THIRD_OWNER' | 'FOURTH_OWNER_PLUS'
+    year?: number
+    kilometers?: number
 }
 
 export interface UploadedPortfolioFile {
