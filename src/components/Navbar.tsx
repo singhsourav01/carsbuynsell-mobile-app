@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Bell, LogOut, User as UserIcon, Settings } from 'lucide-react'
+import { Bell, LogOut, User as UserIcon } from 'lucide-react'
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -72,10 +72,10 @@ export default function Navbar() {
               <UserIcon className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate('/settings')}>
+            {/* <DropdownMenuItem onClick={() => navigate('/settings')}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600">
               <LogOut className="mr-2 h-4 w-4" />

@@ -10,7 +10,7 @@ import {
   FileText,
   Handshake,
   CreditCard,
-  Settings,
+  // Settings,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -25,7 +25,7 @@ const navItems = [
   // { name: 'Categories', href: '/categories', icon: Tags, roles: ['ADMIN'] },
   { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard, roles: ['ADMIN'] },
   // { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['ADMIN'] },
-  { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'MODERATOR'] },
+  // { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'MODERATOR'] },
 ]
 
 export default function Sidebar() {

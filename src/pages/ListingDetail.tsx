@@ -264,9 +264,9 @@ export default function ListingDetail() {
           </Card>
 
           <Card>
-            <CardHeader>
+            {/* <CardHeader>
               <CardTitle className="text-lg">Featured Settings</CardTitle>
-            </CardHeader>
+            </CardHeader> */}
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>

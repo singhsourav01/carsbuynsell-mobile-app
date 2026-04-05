@@ -7,7 +7,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { ColumnDef } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { toast } from 'sonner'
-import { Eye, Pencil, Trash2, Plus, Loader2, Search, User as UserIcon } from 'lucide-react'
+import { Eye, Pencil, Trash2, Plus, Loader2, Search, User as UserIcon, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -123,6 +123,16 @@ export default function Listings() {
   const [isLoadingListings, setIsLoadingListings] = useState(true)
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
   const [isLoadingCategories, setIsLoadingCategories] = useState(false)
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pagination, setPagination] = useState({
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+    limit: 12
+  })
 
   // User Selection State
   const [userSearch, setUserSearch] = useState('')
@@ -180,21 +190,30 @@ export default function Listings() {
     kilometers: '',
   })
 
-  const fetchListings = async () => {
+  const fetchListings = async (page: number = 1) => {
     try {
       setIsLoadingListings(true)
 
-      const response = await apiClient.get('http://13.127.188.130:3002/user/listings')
+      const response = await apiClient.get(`http://13.127.188.130:3002/user/listings?page=${page}&limit=12`)
 
       const raw = response.data
 
       console.log(response.data, " here is response")
 
-      const listingsArray =
-        raw?.data?.data ||
-        []
+      const listingsArray = raw?.data?.data || []
+      const paginationData = raw?.data?.pagination
 
       setListings(Array.isArray(listingsArray) ? listingsArray : [])
+      
+      if (paginationData) {
+        setPagination({
+          total: paginationData.total || 0,
+          totalPages: paginationData.totalPages || 1,
+          hasNextPage: paginationData.hasNextPage || false,
+          hasPrevPage: paginationData.hasPrevPage || false,
+          limit: paginationData.limit || 12
+        })
+      }
 
     } catch (error) {
       console.error('Failed to fetch listings:', error)
@@ -224,9 +243,9 @@ export default function Listings() {
   }
 
   useEffect(() => {
-    fetchListings()
+    fetchListings(currentPage)
     fetchCategories()
-  }, [])
+  }, [currentPage])
 
   const fetchUsers = async (search: string = '') => {
     try {
@@ -388,7 +407,7 @@ try {
   setUserSearch('')
   setShowUserDropdown(false)
 
-  fetchListings()
+  fetchListings(currentPage)
 
 } catch (error: any) {
 
@@ -501,7 +520,7 @@ try {
         kilometers: '',
       })
 
-      fetchListings()
+      fetchListings(currentPage)
 
     } catch (error: any) {
       console.error('Error updating listing:', error)
@@ -929,12 +948,44 @@ try {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <DataTable
-          columns={actionColumns}
-          data={filteredListings}
-          searchKey="lst_title"
-          searchPlaceholder="Search listings..."
-        />
+        <>
+          <DataTable
+            columns={actionColumns}
+            data={filteredListings}
+            searchKey="lst_title"
+            searchPlaceholder="Search listings..."
+          />
+          
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between px-2 py-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {listings.length} of {pagination.total} listings
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={!pagination.hasPrevPage || isLoadingListings}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <div className="text-sm font-medium">
+                Page {currentPage} of {pagination.totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={!pagination.hasNextPage || isLoadingListings}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </div>
+          </div>
+        </>
       )}
 
       <ConfirmDialog

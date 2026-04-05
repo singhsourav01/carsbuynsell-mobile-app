@@ -16,7 +16,7 @@ import DealDetail from './pages/DealDetail'
 import Categories from './pages/Categories'
 import Subscriptions from './pages/Subscriptions'
 import Reports from './pages/Reports'
-import Settings from './pages/Settings'
+// import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
 import RoleRoute from './components/RoleRoute'
 
@@ -52,7 +52,7 @@ function App() {
               <Route path="reports" element={<Reports />} />
             </Route>
             
-            <Route path="settings" element={<Settings />} />
+            {/* <Route path="settings" element={<Settings />} /> */}
           </Route>
         </Route>
         
