@@ -16,16 +16,16 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'moderator'] },
-  { name: 'Users', href: '/users', icon: Users, roles: ['admin', 'moderator'] },
-  { name: 'Listings', href: '/listings', icon: Car, roles: ['admin', 'moderator'] },
-  { name: 'Auctions', href: '/auctions', icon: Gavel, roles: ['admin', 'moderator'] },
-  { name: 'Sell Requests', href: '/sell-requests', icon: FileText, roles: ['admin', 'moderator'] },
-  { name: 'Deals', href: '/deals', icon: Handshake, roles: ['admin', 'moderator'] },
-  // { name: 'Categories', href: '/categories', icon: Tags, roles: ['admin'] },
-  { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard, roles: ['admin'] },
-  // { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['admin'] },
-  { name: 'Settings', href: '/settings', icon: Settings, roles: ['admin', 'moderator'] },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'MODERATOR'] },
+  { name: 'Users', href: '/users', icon: Users, roles: ['ADMIN', 'MODERATOR'] },
+  { name: 'Listings', href: '/listings', icon: Car, roles: ['ADMIN', 'MODERATOR'] },
+  { name: 'Auctions', href: '/auctions', icon: Gavel, roles: ['ADMIN', 'MODERATOR'] },
+  { name: 'Sell Requests', href: '/sell-requests', icon: FileText, roles: ['ADMIN', 'MODERATOR'] },
+  { name: 'Deals', href: '/deals', icon: Handshake, roles: ['ADMIN', 'MODERATOR'] },
+  // { name: 'Categories', href: '/categories', icon: Tags, roles: ['ADMIN'] },
+  { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard, roles: ['ADMIN'] },
+  // { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['ADMIN'] },
+  { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'MODERATOR'] },
 ]
 
 export default function Sidebar() {
@@ -51,7 +51,7 @@ export default function Sidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Car className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold">AutoBid</span>
+            <span className="text-xl font-bold">CarsBuyNSell</span>
           </Link>
         )}
         <button

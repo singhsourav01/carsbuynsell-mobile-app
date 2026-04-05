@@ -13,7 +13,7 @@ export default function Settings() {
   const user = useAuthStore((state) => state.user)
   const [profile, setProfile] = useState({
     name: user?.name || 'Admin User',
-    email: user?.email || 'admin@autobid.com',
+    email: user?.email || 'admin@gmail.com',
     phone: user?.phone || '+91 9876543210',
   })
 

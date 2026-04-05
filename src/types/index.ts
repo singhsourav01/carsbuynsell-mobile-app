@@ -1,5 +1,5 @@
 export type UserStatus = 'pending' | 'accepted' | 'rejected' | 'blocked'
-export type UserRole = 'admin' | 'moderator'
+export type UserRole = 'ADMIN' | 'USER' | 'MODERATOR'
 
 export interface User {
   id: string
@@ -11,6 +11,29 @@ export interface User {
   role: UserRole
   isVerified: boolean
   createdAt: string
+}
+
+// API response types for auth
+export interface ApiUser {
+  user_id: string
+  user_full_name: string
+  user_email: string
+  user_primary_phone: string
+  user_role: UserRole
+  user_admin_status: string
+  user_email_verified: boolean
+  user_phone_verified: boolean
+  user_profile_image_file_id: string | null
+  user_created_at: string
+  access_token: string
+  refresh_token: string
+}
+
+export interface AuthResponse {
+  statusCode: number
+  data: ApiUser
+  message: string
+  success: boolean
 }
 
 export type ListingType = 'auction' | 'buy_now'

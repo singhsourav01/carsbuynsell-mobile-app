@@ -52,6 +52,15 @@ export interface Listing {
     lst_view_count: number
     lst_created_at: string
     lst_updated_at: string
+    vehicle_details?: {
+        lvd_id?: string
+        lvd_fuel_type?: string
+        lvd_transmission?: string
+        lvd_body_type?: string
+        lvd_ownership?: string
+        lvd_year?: number
+        lvd_kilometers?: number
+    } | null
     seller: {
         user_id: string
         user_full_name: string

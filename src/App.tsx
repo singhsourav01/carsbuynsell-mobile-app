@@ -46,7 +46,7 @@ function App() {
             <Route path="deals" element={<Deals />} />
             <Route path="deals/:id" element={<DealDetail />} />
             
-            <Route element={<RoleRoute allowedRoles={['admin']} />}>
+            <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
               <Route path="categories" element={<Categories />} />
               <Route path="subscriptions" element={<Subscriptions />} />
               <Route path="reports" element={<Reports />} />

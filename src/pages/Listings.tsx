@@ -28,11 +28,9 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { apiClient } from '@/services/api-client'
+import { useAuthStore } from '@/store/auth-store'
 import { CreateListingPayload, Listing, VehicleDetailsPayload } from '@/types/listing-types'
 import axios from 'axios'
-
-// Temporary token for file upload - replace with proper auth later
-const TEMP_FILE_UPLOAD_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMjc4NmQwMWUtZDY0NC00ZmFlLTgzMjMtMTlmZjI4MDAzYWY1IiwiZW1haWwiOiJjY2NAZ21haWwuY29tIiwiZnVsbF9uYW1lIjoiQ2NjIiwicGhvbmUiOiIxMjEyMTIxMjEyIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3NzQ2NDM2OTEsImV4cCI6MTc3NTI0ODQ5MX0.fBQOBFSXrHmDGNmKto47sYqQLskDL8yGdHmVvyQXgvXzXKd8ho0TohEPR9UasKmWnjWOHXm7Tbmv5zajF6rBtCSul7G6mjQHWZiciTeSc202oVo803sSsAJpWBqYeepG2z2MSNyID8PVtd3pi1vW9PLaisDU1WLb8ryQkJG24YQiMheHXtIFpJo3X6GzE-h0YkBFyf_82MAMc08xgP22T7MxFDsfHFCX62KfVQz_zGxActZNZbrClWBsh2oOmHHaz4sXPvgRqQlb7f-Qxr__7VAkFsUECx6p-jyV9KGkVSRCiJbFGp0nRUqX3mH2LYpzcizqNHhrDHsJyC7zM50XjMU_QAMIOGAzWzpp06la7Zu_qjhWbztidxISvLjtJkZJEkkd_SlzIpl5NkF5YbdBvGfEdfXnUIy6Y75i_OdrUvDzfG6gKU6CEwne0LkGS3Ph0-RA3cy9SR10aJphNAriDd5gat31tXUwKPoHFoB3m5eUvJUPFA_k8GVmT0u-uL1JDMuAKZZeikfs6qvjJvY9HbmEy4YB8BSPnOHmGocPSFbSvHWs3EiRYu81h4h3_jnXvPloBNt7oPCvf7THL2Y4zjKMv3eoMQjKF8iUNS5v0R_pd9CUOd7zW0Dm8rEOHqAagG3MK7_Rqz8CkYLxJxwBaKEU6KlZ7DOsWR3YSmubg6w'
 const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file/upload'
 const columns: ColumnDef<Listing>[] = [
   {
@@ -105,12 +103,16 @@ const columns: ColumnDef<Listing>[] = [
 
 export default function Listings() {
   const navigate = useNavigate()
+  const token = useAuthStore((state) => state.token)
   const [typeFilter, setTypeFilter] = useState('All')
   const [statusFilter, setStatusFilter] = useState('All')
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingListing, setEditingListing] = useState<Listing | null>(null)
 
 
   const [listingImages, setListingImages] = useState<File[]>([])
@@ -138,7 +140,31 @@ export default function Listings() {
     lst_auction_end: '',
     lst_min_increment: 0,
   })
+  const [editFormData, setEditFormData] = useState<CreateListingPayload>({
+    lst_title: '',
+    lst_description: '',
+    lst_category_id: '',
+    lst_type: 'BUY_NOW',
+    lst_price: 0,
+    lst_auction_end: '',
+    lst_min_increment: 0,
+  })
   const [vehicleDetails, setVehicleDetails] = useState<{
+    fuel_type: '' | NonNullable<VehicleDetailsPayload['fuel_type']>
+    transmission: '' | NonNullable<VehicleDetailsPayload['transmission']>
+    body_type: '' | NonNullable<VehicleDetailsPayload['body_type']>
+    ownership: '' | NonNullable<VehicleDetailsPayload['ownership']>
+    year: number | ''
+    kilometers: number | ''
+  }>({
+    fuel_type: '',
+    transmission: '',
+    body_type: '',
+    ownership: '',
+    year: '',
+    kilometers: '',
+  })
+  const [editVehicleDetails, setEditVehicleDetails] = useState<{
     fuel_type: '' | NonNullable<VehicleDetailsPayload['fuel_type']>
     transmission: '' | NonNullable<VehicleDetailsPayload['transmission']>
     body_type: '' | NonNullable<VehicleDetailsPayload['body_type']>
@@ -279,7 +305,7 @@ try {
 
       const uploadResponse = await axios.post(`${FILE_SERVICE_URL}?id=${selectedUser.user_id}`, formDataUpload, {
         headers: {
-          'Authorization': `Bearer ${TEMP_FILE_UPLOAD_TOKEN}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       })
@@ -380,6 +406,114 @@ try {
 }
   }
 
+  const openEditDialog = (listing: Listing) => {
+    setEditingListing(listing)
+    setEditFormData({
+      lst_title: listing.lst_title || '',
+      lst_description: listing.lst_description || '',
+      lst_category_id: listing.lst_category_id || listing.category?.cat_id || '',
+      lst_type: listing.lst_type || 'BUY_NOW',
+      lst_price: Number(listing.lst_price) || 0,
+      lst_auction_end: listing.lst_auction_end ? new Date(listing.lst_auction_end).toISOString().slice(0, 16) : '',
+      lst_min_increment: Number(listing.lst_min_increment) || 0,
+    })
+    const vd = listing.vehicle_details
+    setEditVehicleDetails({
+      fuel_type: vd?.lvd_fuel_type || '',
+      transmission: vd?.lvd_transmission || '',
+      body_type: vd?.lvd_body_type || '',
+      ownership: vd?.lvd_ownership || '',
+      year: vd?.lvd_year || '',
+      kilometers: vd?.lvd_kilometers || '',
+    })
+    setEditOpen(true)
+  }
+
+  const handleEditListing = async () => {
+    if (!editingListing) return
+    if (!editFormData.lst_title || !editFormData.lst_category_id || !editFormData.lst_price) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    if (editFormData.lst_type === 'AUCTION' && !editFormData.lst_auction_end) {
+      toast.error('Auction end time is required for Auctions')
+      return
+    }
+
+    try {
+      setIsEditing(true)
+
+      const payload: CreateListingPayload = {
+        ...editFormData,
+      }
+
+      if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
+        payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
+      }
+
+      if (payload.lst_type !== 'AUCTION') {
+        payload.lst_auction_end = undefined
+        payload.lst_min_increment = undefined
+      }
+
+      const normalizedVehicleDetails: VehicleDetailsPayload = {
+        fuel_type: editVehicleDetails.fuel_type || undefined,
+        transmission: editVehicleDetails.transmission || undefined,
+        body_type: editVehicleDetails.body_type || undefined,
+        ownership: editVehicleDetails.ownership || undefined,
+        year: editVehicleDetails.year === '' ? undefined : Number(editVehicleDetails.year),
+        kilometers: editVehicleDetails.kilometers === '' ? undefined : Number(editVehicleDetails.kilometers),
+      }
+
+      const hasVehicleDetails = Object.values(normalizedVehicleDetails).some((value) => value !== undefined)
+
+      if (hasVehicleDetails) {
+        payload.vehicle_details = normalizedVehicleDetails
+      }
+
+      await apiClient.patch(
+        `http://13.127.188.130:3002/user/listings/${editingListing.lst_id}`,
+        payload
+      )
+
+      toast.success("Listing updated successfully!")
+
+      setEditOpen(false)
+      setEditingListing(null)
+
+      // Reset edit form
+      setEditFormData({
+        lst_title: '',
+        lst_description: '',
+        lst_category_id: '',
+        lst_type: 'BUY_NOW',
+        lst_price: 0,
+        lst_auction_end: '',
+        lst_min_increment: 0,
+      })
+      setEditVehicleDetails({
+        fuel_type: '',
+        transmission: '',
+        body_type: '',
+        ownership: '',
+        year: '',
+        kilometers: '',
+      })
+
+      fetchListings()
+
+    } catch (error: any) {
+      console.error('Error updating listing:', error)
+      toast.error(
+        error.response?.data?.message ||
+        'Failed to update listing'
+      )
+    } finally {
+      setIsEditing(false)
+    }
+  }
+
   const filteredListings = listings.filter((listing) => {
     if (!listing) return false
     const typeMatch = typeFilter === 'All' || (listing.lst_type && listing.lst_type.toUpperCase() === typeFilter.toUpperCase())
@@ -398,7 +532,7 @@ try {
           <Button variant="ghost" size="icon" onClick={() => navigate(`/listings/${row.original.lst_id}`)}>
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/listings/${row.original.lst_id}`)}>
+          <Button variant="ghost" size="icon" onClick={() => openEditDialog(row.original)}>
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
@@ -817,6 +951,223 @@ try {
           }
         }}
       />
+
+      {/* Edit Listing Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Listing</DialogTitle>
+            <DialogDescription>
+              Update the listing details below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit_lst_title">Title *</Label>
+                <Input
+                  id="edit_lst_title"
+                  placeholder="e.g., 2024 Hyundai Creta SX"
+                  value={editFormData.lst_title}
+                  onChange={(e) => setEditFormData({ ...editFormData, lst_title: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit_lst_category_id">Category *</Label>
+                <Select
+                  value={editFormData.lst_category_id}
+                  onValueChange={(value) => setEditFormData({ ...editFormData, lst_category_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select category"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="edit_lst_description">Description</Label>
+              <Textarea
+                id="edit_lst_description"
+                placeholder="Mint condition, single owner, 5000km driven..."
+                value={editFormData.lst_description}
+                onChange={(e) => setEditFormData({ ...editFormData, lst_description: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit_lst_type">Listing Type *</Label>
+                <Select
+                  value={editFormData.lst_type}
+                  onValueChange={(value: 'BUY_NOW' | 'AUCTION') => setEditFormData({ ...editFormData, lst_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="BUY_NOW">Buy Now</SelectItem>
+                    <SelectItem value="AUCTION">Auction</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="edit_lst_price">
+                  {editFormData.lst_type === 'AUCTION' ? 'Starting Price (₹) *' : 'Fixed Price (₹) *'}
+                </Label>
+                <Input
+                  id="edit_lst_price"
+                  type="number"
+                  placeholder="0"
+                  value={editFormData.lst_price || ''}
+                  onChange={(e) => setEditFormData({ ...editFormData, lst_price: Number(e.target.value) })}
+                />
+              </div>
+            </div>
+
+            {editFormData.lst_type === 'AUCTION' && (
+              <div className="grid grid-cols-2 gap-4 border-l-4 border-primary pl-4 py-2 bg-primary/5 rounded-r-md">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit_lst_auction_end">Auction End Time *</Label>
+                  <Input
+                    id="edit_lst_auction_end"
+                    type="datetime-local"
+                    value={editFormData.lst_auction_end}
+                    onChange={(e) => setEditFormData({ ...editFormData, lst_auction_end: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit_lst_min_increment">Min Bid Increment (₹)</Label>
+                  <Input
+                    id="edit_lst_min_increment"
+                    type="number"
+                    placeholder="e.g. 5000"
+                    value={editFormData.lst_min_increment || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, lst_min_increment: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-4 border rounded-md p-4">
+              <Label className="text-sm font-semibold">Vehicle Details (optional)</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Fuel Type</Label>
+                  <Select
+                    value={editVehicleDetails.fuel_type}
+                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, fuel_type: value as NonNullable<VehicleDetailsPayload['fuel_type']> })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select fuel type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PETROL">Petrol</SelectItem>
+                      <SelectItem value="DIESEL">Diesel</SelectItem>
+                      <SelectItem value="CNG">CNG</SelectItem>
+                      <SelectItem value="ELECTRIC">Electric</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Transmission</Label>
+                  <Select
+                    value={editVehicleDetails.transmission}
+                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, transmission: value as NonNullable<VehicleDetailsPayload['transmission']> })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select transmission" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MANUAL">Manual</SelectItem>
+                      <SelectItem value="AUTOMATIC">Automatic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Body Type</Label>
+                  <Select
+                    value={editVehicleDetails.body_type}
+                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, body_type: value as NonNullable<VehicleDetailsPayload['body_type']> })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select body type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="SEDAN">Sedan</SelectItem>
+                      <SelectItem value="MUV">MUV</SelectItem>
+                      <SelectItem value="SUV">SUV</SelectItem>
+                      <SelectItem value="LUXURY">Luxury</SelectItem>
+                      <SelectItem value="HATCHBACK">Hatchback</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Ownership</Label>
+                  <Select
+                    value={editVehicleDetails.ownership}
+                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, ownership: value as NonNullable<VehicleDetailsPayload['ownership']> })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select ownership" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FIRST_OWNER">First owner</SelectItem>
+                      <SelectItem value="SECOND_OWNER">Second owner</SelectItem>
+                      <SelectItem value="THIRD_OWNER">Third owner</SelectItem>
+                      <SelectItem value="FOURTH_OWNER_PLUS">Fourth owner+</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit_vehicle_year">Year</Label>
+                  <Input
+                    id="edit_vehicle_year"
+                    type="number"
+                    placeholder="e.g. 2021"
+                    value={editVehicleDetails.year}
+                    onChange={(e) => setEditVehicleDetails({ ...editVehicleDetails, year: e.target.value ? Number(e.target.value) : '' })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit_vehicle_kilometers">Kilometers</Label>
+                  <Input
+                    id="edit_vehicle_kilometers"
+                    type="number"
+                    placeholder="e.g. 35000"
+                    value={editVehicleDetails.kilometers}
+                    onChange={(e) => setEditVehicleDetails({ ...editVehicleDetails, kilometers: e.target.value ? Number(e.target.value) : '' })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={isEditing}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditListing} disabled={isEditing}>
+              {isEditing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : 'Update Listing'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

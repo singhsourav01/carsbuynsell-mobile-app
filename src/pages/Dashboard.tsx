@@ -24,29 +24,32 @@ interface DashboardData {
 
 const sellRequestsColumns: ColumnDef<any>[] = [
   {
-    accessorKey: 'title',
+    accessorKey: 'listing.lst_title',
     header: 'Title',
     cell: ({ row }) => (
       <div>
-        <p className="font-medium">{row.original.title}</p>
-        <p className="text-xs text-gray-500">{row.original.category}</p>
+        <p className="font-medium">{row.original.listing?.lst_title || 'N/A'}</p>
+        <p className="text-xs text-gray-500">{row.original.listing?.category?.cat_name || 'N/A'}</p>
       </div>
     ),
   },
   {
-    accessorKey: 'userName',
+    accessorKey: 'listing.seller.user_full_name',
     header: 'Seller',
-    cell: ({ row }) => row.original.userName || row.original.user?.name || 'N/A',
+    cell: ({ row }) => row.original.listing?.seller?.user_full_name || 'N/A',
   },
   {
-    accessorKey: 'expectedPrice',
+    accessorKey: 'listing.lst_price',
     header: 'Expected Price',
-    cell: ({ row }) => row.original.expectedPrice ? `₹${row.original.expectedPrice.toLocaleString()}` : 'N/A',
+    cell: ({ row }) => {
+      const price = row.original.listing?.lst_price
+      return price ? `₹${Number(price).toLocaleString()}` : 'N/A'
+    },
   },
   {
-    accessorKey: 'status',
+    accessorKey: 'ord_status',
     header: 'Status',
-    cell: ({ row }) => <StatusBadge status={row.original.status} />,
+    cell: ({ row }) => <StatusBadge status={row.original.ord_status} />,
   },
 ]
 
@@ -121,7 +124,7 @@ export default function Dashboard() {
               <DataTable
                 columns={sellRequestsColumns}
                 data={data.recentSells}
-                searchKey="title"
+                searchKey="listing.lst_title"
                 searchPlaceholder="Search requests..."
               />
             ) : (
