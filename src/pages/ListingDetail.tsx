@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -13,27 +13,84 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { mockListings, mockUsers } from '@/types/mock-data'
 import { toast } from 'sonner'
-import { ArrowLeft, Edit, Save, Trash2, DollarSign, Calendar, User, Tag } from 'lucide-react'
+import { ArrowLeft, Edit, Save, Trash2, DollarSign, Calendar, User, Tag, Loader2 } from 'lucide-react'
 import dayjs from 'dayjs'
+import { apiClient } from '@/services/api-client'
+import { Listing } from '@/types/listing-types'
 
 export default function ListingDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
-  
-  const listing = mockListings.find(l => l.id === id)
-  const seller = mockUsers.find(u => u.id === listing?.sellerId)
+  const [listing, setListing] = useState<Listing | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isTogglingFeatured, setIsTogglingFeatured] = useState(false)
 
   const [formData, setFormData] = useState({
-    title: listing?.title || '',
-    description: listing?.description || '',
-    category: listing?.category || '',
-    type: listing?.type || '',
-    price: listing?.price || 0,
-    status: listing?.status || '',
+    title: '',
+    description: '',
+    category: '',
+    type: '',
+    price: 0,
+    status: '',
   })
+
+  // Fetch listing data
+  useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        setIsLoading(true)
+        const response = await apiClient.get(`/user/listings/${id}`)
+        const data = response.data?.data || response.data
+        setListing(data)
+        setFormData({
+          title: data.lst_title || '',
+          description: data.lst_description || '',
+          category: data.category?.cat_name || '',
+          type: data.lst_type || '',
+          price: Number(data.lst_price) || 0,
+          status: data.lst_status || '',
+        })
+      } catch (error) {
+        console.error('Failed to fetch listing:', error)
+        toast.error('Failed to load listing')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    if (id) fetchListing()
+  }, [id])
+
+  // Toggle featured status
+  const handleToggleFeatured = async () => {
+    if (!listing) return
+    try {
+      setIsTogglingFeatured(true)
+      const newFeaturedStatus = !listing.lst_is_featured
+      
+      await apiClient.patch(`/admin/listings/${listing.lst_id}/feature`, {
+        is_featured: newFeaturedStatus
+      })
+      
+      setListing(prev => prev ? { ...prev, lst_is_featured: newFeaturedStatus } : null)
+      toast.success(newFeaturedStatus ? 'Listing marked as featured' : 'Listing unfeatured')
+    } catch (error: any) {
+      console.error('Error toggling featured status:', error)
+      toast.error(error.response?.data?.message || 'Failed to update featured status')
+    } finally {
+      setIsTogglingFeatured(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-gray-500 mt-2">Loading listing...</p>
+      </div>
+    )
+  }
 
   if (!listing) {
     return (
@@ -174,43 +231,52 @@ export default function ListingDetail() {
             ) : (
               <div className="space-y-6">
                 <div className="relative">
-                  <img
-                    src={listing.images[0]}
-                    alt={listing.title}
-                    className="w-full h-80 object-cover rounded-lg"
-                  />
+                  {listing.images && listing.images[0]?.limg_url ? (
+                    <img
+                      src={listing.images[0].limg_url}
+                      alt={listing.lst_title}
+                      className="w-full h-80 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-80 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                      No Image
+                    </div>
+                  )}
                   <div className="absolute top-4 right-4 flex gap-2">
-                    <Badge variant={listing.type === 'auction' ? 'auction' : 'buy_now'}>
-                      {listing.type === 'auction' ? 'Auction' : 'Buy Now'}
+                    <Badge variant={listing.lst_type === 'AUCTION' ? 'auction' : 'buy_now'}>
+                      {listing.lst_type === 'AUCTION' ? 'Auction' : 'Buy Now'}
                     </Badge>
-                    <Badge variant={listing.status === 'active' ? 'active' : listing.status === 'sold' ? 'sold' : 'outline'}>
-                      {listing.status}
+                    <Badge variant={listing.lst_status?.toLowerCase() === 'active' ? 'active' : listing.lst_status?.toLowerCase() === 'sold' ? 'sold' : 'outline'}>
+                      {listing.lst_status}
                     </Badge>
+                    {listing.lst_is_featured && (
+                      <Badge className="bg-amber-100 text-amber-700">Featured</Badge>
+                    )}
                   </div>
                 </div>
                 
                 <div>
-                  <h2 className="text-2xl font-bold">{listing.title}</h2>
-                  <p className="text-gray-500 mt-2">{listing.description}</p>
+                  <h2 className="text-2xl font-bold">{listing.lst_title}</h2>
+                  <p className="text-gray-500 mt-2">{listing.lst_description}</p>
                 </div>
 
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center gap-2 text-gray-500">
                     <Tag className="h-4 w-4" />
-                    <span>{listing.category}</span>
+                    <span>{listing.category?.cat_name}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-500">
                     <DollarSign className="h-4 w-4" />
-                    <span>₹{listing.price.toLocaleString()}</span>
+                    <span>₹{Number(listing.lst_price).toLocaleString()}</span>
                   </div>
-                  {listing.currentBid && (
+                  {listing.lst_current_bid && (
                     <div className="flex items-center gap-2 text-gray-500">
-                      <span>Current Bid: ₹{listing.currentBid.toLocaleString()}</span>
+                      <span>Current Bid: ₹{Number(listing.lst_current_bid).toLocaleString()}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-gray-500">
                     <Calendar className="h-4 w-4" />
-                    <span>Created {dayjs(listing.createdAt).format('DD MMM YYYY')}</span>
+                    <span>Created {dayjs(listing.lst_created_at).format('DD MMM YYYY')}</span>
                   </div>
                 </div>
               </div>
@@ -229,11 +295,10 @@ export default function ListingDetail() {
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">{seller?.name || listing.sellerName}</p>
-                  <p className="text-sm text-gray-500">{seller?.email}</p>
+                  <p className="font-medium">{listing.seller?.user_full_name || 'Unknown Seller'}</p>
                 </div>
               </div>
-              <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/users/${listing.sellerId}`)}>
+              <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/users/${listing.lst_seller_id}`)}>
                 View Seller Profile
               </Button>
             </CardContent>
@@ -246,41 +311,33 @@ export default function ListingDetail() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Views</span>
-                <span className="font-medium">1,234</span>
+                <span className="font-medium">{listing.lst_view_count || 0}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Total Bids</span>
-                <span className="font-medium">{listing.bidCount}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Watchlist</span>
-                <span className="font-medium">56</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-500">Shares</span>
-                <span className="font-medium">23</span>
+                <span className="font-medium">{listing.lst_bid_count || 0}</span>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            {/* <CardHeader>
+            <CardHeader>
               <CardTitle className="text-lg">Featured Settings</CardTitle>
-            </CardHeader> */}
+            </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Featured Listing</p>
                   <p className="text-sm text-gray-500">Show on homepage</p>
                 </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Boost Listing</p>
-                  <p className="text-sm text-gray-500">Increase visibility</p>
-                </div>
-                <Switch />
+                {isTogglingFeatured ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : (
+                  <Switch 
+                    checked={listing.lst_is_featured} 
+                    onCheckedChange={handleToggleFeatured}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

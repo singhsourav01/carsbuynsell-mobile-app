@@ -7,7 +7,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import { ColumnDef } from '@tanstack/react-table'
 import dayjs from 'dayjs'
 import { toast } from 'sonner'
-import { Eye, Pencil, Trash2, Plus, Loader2, Search, User as UserIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Eye, Pencil, Trash2, Plus, Loader2, Search, User as UserIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -113,7 +113,7 @@ export default function Listings() {
   const [editOpen, setEditOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editingListing, setEditingListing] = useState<Listing | null>(null)
-
+  const [featuringListingId, setFeaturingListingId] = useState<string | null>(null)
 
   const [listingImages, setListingImages] = useState<File[]>([])
   const [, setUploadingImages] = useState(false)
@@ -533,6 +533,31 @@ try {
     }
   }
 
+  const handleToggleFeatured = async (listing: Listing) => {
+    try {
+      setFeaturingListingId(listing.lst_id)
+      const newFeaturedStatus = !listing.lst_is_featured
+      
+      await apiClient.patch(`/admin/listings/${listing.lst_id}/feature`, {
+        is_featured: newFeaturedStatus
+      })
+      
+      // Update local state
+      setListings(prev => prev.map(l => 
+        l.lst_id === listing.lst_id 
+          ? { ...l, lst_is_featured: newFeaturedStatus }
+          : l
+      ))
+      
+      toast.success(newFeaturedStatus ? 'Listing marked as featured' : 'Listing unfeatured')
+    } catch (error: any) {
+      console.error('Error toggling featured status:', error)
+      toast.error(error.response?.data?.message || 'Failed to update featured status')
+    } finally {
+      setFeaturingListingId(null)
+    }
+  }
+
   const filteredListings = listings.filter((listing) => {
     if (!listing) return false
     const typeMatch = typeFilter === 'All' || (listing.lst_type && listing.lst_type.toUpperCase() === typeFilter.toUpperCase())
@@ -548,6 +573,20 @@ try {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon"
+            title={row.original.lst_is_featured ? 'Remove from featured' : 'Mark as featured'}
+            className={row.original.lst_is_featured ? 'text-amber-500' : 'text-gray-400'}
+            disabled={featuringListingId === row.original.lst_id}
+            onClick={() => handleToggleFeatured(row.original)}
+          >
+            {featuringListingId === row.original.lst_id ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Star className={`h-4 w-4 ${row.original.lst_is_featured ? 'fill-amber-500' : ''}`} />
+            )}
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => navigate(`/listings/${row.original.lst_id}`)}>
             <Eye className="h-4 w-4" />
           </Button>

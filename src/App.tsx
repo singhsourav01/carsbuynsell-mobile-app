@@ -14,7 +14,7 @@ import SellRequestDetail from './pages/SellRequestDetail'
 import Deals from './pages/Deals'
 import DealDetail from './pages/DealDetail'
 import Categories from './pages/Categories'
-import Subscriptions from './pages/Subscriptions'
+// import Subscriptions from './pages/Subscriptions'
 import Reports from './pages/Reports'
 // import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -48,7 +48,7 @@ function App() {
             
             <Route element={<RoleRoute allowedRoles={['ADMIN']} />}>
               <Route path="categories" element={<Categories />} />
-              <Route path="subscriptions" element={<Subscriptions />} />
+              {/* <Route path="subscriptions" element={<Subscriptions />} /> */}
               <Route path="reports" element={<Reports />} />
             </Route>
             

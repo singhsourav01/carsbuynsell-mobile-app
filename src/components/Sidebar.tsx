@@ -23,7 +23,7 @@ const navItems = [
   { name: 'Sell Requests', href: '/sell-requests', icon: FileText, roles: ['ADMIN', 'MODERATOR'] },
   { name: 'Deals', href: '/deals', icon: Handshake, roles: ['ADMIN', 'MODERATOR'] },
   // { name: 'Categories', href: '/categories', icon: Tags, roles: ['ADMIN'] },
-  { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard, roles: ['ADMIN'] },
+  // { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard, roles: ['ADMIN'] },
   // { name: 'Reports', href: '/reports', icon: BarChart3, roles: ['ADMIN'] },
   // { name: 'Settings', href: '/settings', icon: Settings, roles: ['ADMIN', 'MODERATOR'] },
 ]
