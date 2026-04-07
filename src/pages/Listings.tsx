@@ -573,7 +573,7 @@ try {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Button 
+          {/* <Button 
             variant="ghost" 
             size="icon"
             title={row.original.lst_is_featured ? 'Remove from featured' : 'Mark as featured'}
@@ -586,7 +586,7 @@ try {
             ) : (
               <Star className={`h-4 w-4 ${row.original.lst_is_featured ? 'fill-amber-500' : ''}`} />
             )}
-          </Button>
+          </Button> */}
           <Button variant="ghost" size="icon" onClick={() => navigate(`/listings/${row.original.lst_id}`)}>
             <Eye className="h-4 w-4" />
           </Button>
