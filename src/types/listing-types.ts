@@ -77,3 +77,60 @@ export interface Listing {
         limg_order: number
     }[]
 }
+
+// Auction types
+export interface Auction extends Listing {
+    _count?: {
+        bids: number
+        engagements: number
+    }
+}
+
+export interface AuctionBid {
+    bid_id: string
+    bid_amount: string
+    bid_created_at: string
+    bidder: {
+        user_id: string
+        user_full_name: string
+        user_email: string
+        user_primary_phone: string
+        user_profile_image_file_id: string | null
+    }
+}
+
+export interface AuctionEngagement {
+    eng_id: string
+    eng_status: string
+    eng_created_at: string
+    eng_closed_at: string | null
+    user: {
+        user_id: string
+        user_full_name: string
+        user_email: string
+        user_primary_phone: string
+        user_profile_image_file_id: string | null
+    }
+}
+
+export interface AuctionParticipant {
+    user: {
+        user_id: string
+        user_full_name: string
+        user_email: string
+        user_primary_phone: string
+        user_profile_image_file_id: string | null
+    }
+    engagement_status: string
+    joined_at: string
+    highest_bid: number
+    total_bids: number
+}
+
+export interface AuctionDetail extends Auction {
+    bids: AuctionBid[]
+    engagements: AuctionEngagement[]
+    participants: AuctionParticipant[]
+    total_participants: number
+    total_bids: number
+}

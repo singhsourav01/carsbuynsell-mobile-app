@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { mockAuctions, mockUsers } from '@/types/mock-data'
+import { apiClient } from '@/services/api-client'
+import { AuctionDetail as AuctionDetailType } from '@/types/listing-types'
 import { toast } from 'sonner'
-import { ArrowLeft, Pause, Play, Clock, Users, DollarSign, Gavel, Shield, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Clock, Users, DollarSign, Gavel, User, Eye, Tag, Calendar, Loader2, Mail, Phone } from 'lucide-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -15,196 +15,404 @@ dayjs.extend(relativeTime)
 export default function AuctionDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const fromPage = searchParams.get('from') || '1'
   
-  const auction = mockAuctions.find(a => a.id === id)
-  const seller = mockUsers.find(u => u.id === auction?.listing.sellerId)
+  const [auction, setAuction] = useState<AuctionDetailType | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const [isActive, setIsActive] = useState(auction?.isActive ?? true)
-  const [timeExtension, setTimeExtension] = useState('1')
+  const handleBack = () => {
+    navigate(`/auctions?page=${fromPage}`)
+  }
+
+  useEffect(() => {
+    const fetchAuction = async () => {
+      try {
+        setIsLoading(true)
+        const response = await apiClient.get(`/user/admin/auctions/${id}`)
+        setAuction(response.data?.data)
+      } catch (error) {
+        console.error('Failed to fetch auction:', error)
+        toast.error('Failed to load auction details')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    if (id) fetchAuction()
+  }, [id])
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-gray-500 mt-2">Loading auction details...</p>
+      </div>
+    )
+  }
 
   if (!auction) {
     return (
       <div className="flex flex-col items-center justify-center h-96">
         <p className="text-gray-500">Auction not found</p>
-        <Button onClick={() => navigate('/auctions')} className="mt-4">
+        <Button onClick={handleBack} className="mt-4">
           Back to Auctions
         </Button>
       </div>
     )
   }
 
-  const handleToggleStatus = () => {
-    setIsActive(!isActive)
-    toast.success(isActive ? 'Auction paused' : 'Auction resumed')
+  const endsAt = dayjs(auction.lst_auction_end)
+  const now = dayjs()
+  const isEnded = endsAt.isBefore(now)
+  const hoursLeft = endsAt.diff(now, 'hour')
+  const isEndingSoon = !isEnded && hoursLeft < 24
+
+  const getTimeLeftText = () => {
+    if (isEnded) return 'Auction Ended'
+    if (hoursLeft < 1) {
+      const minutesLeft = endsAt.diff(now, 'minute')
+      return `${minutesLeft} minutes left`
+    }
+    if (hoursLeft < 24) return `${hoursLeft} hours left`
+    const daysLeft = endsAt.diff(now, 'day')
+    return `${daysLeft} days left`
   }
 
-  const handleEndAuction = () => {
-    toast.success('Auction ended successfully')
-    navigate('/auctions')
-  }
-
-  const handleExtendTime = () => {
-    toast.success(`Auction extended by ${timeExtension} hour(s)`)
-  }
-
-  const mockBids = [
-    { id: '1', bidder: 'Vikram S.', amount: auction.currentBid - 100000, time: '2 hours ago' },
-    { id: '2', bidder: 'Priya M.', amount: auction.currentBid - 200000, time: '5 hours ago' },
-    { id: '3', bidder: 'Amit K.', amount: auction.currentBid - 350000, time: '1 day ago' },
-  ]
+  // Get highest bidder
+  const highestBid = auction.bids && auction.bids.length > 0 ? auction.bids[0] : null
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/auctions')}>
+          <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold text-navy">Auction Details</h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant={isActive ? 'outline' : 'default'} onClick={handleToggleStatus}>
-            {isActive ? <><Pause className="mr-2 h-4 w-4" /> Pause</> : <><Play className="mr-2 h-4 w-4" /> Resume</>}
-          </Button>
-          <Button variant="destructive" onClick={handleEndAuction}>
-            End Auction
-          </Button>
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Main auction info */}
         <Card className="lg:col-span-2">
           <CardContent className="pt-6">
             <div className="relative">
-              <img
-                src={auction.listing.images[0]}
-                alt={auction.listing.title}
-                className="w-full h-64 object-cover rounded-lg"
-              />
+              {auction.images && auction.images[0]?.limg_url ? (
+                <img
+                  src={auction.images[0].limg_url}
+                  alt={auction.lst_title}
+                  className="w-full h-64 object-cover rounded-lg"
+                />
+              ) : (
+                <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                  No Image
+                </div>
+              )}
               <div className="absolute top-4 right-4 flex gap-2">
-                <Badge variant={isActive ? 'active' : 'outline'}>
-                  {isActive ? 'Live' : 'Paused'}
+                <Badge variant={auction.lst_status === 'ACTIVE' && !isEnded ? 'active' : 'outline'}>
+                  {isEnded ? 'Ended' : auction.lst_status}
                 </Badge>
+                {auction.lst_is_featured && (
+                  <Badge className="bg-amber-100 text-amber-700">Featured</Badge>
+                )}
               </div>
             </div>
 
             <div className="mt-6">
-              <h2 className="text-2xl font-bold">{auction.listing.title}</h2>
-              <p className="text-gray-500">{auction.listing.category} • {auction.listing.description}</p>
+              <h2 className="text-2xl font-bold">{auction.lst_title}</h2>
+              <p className="text-gray-500 mt-1">{auction.lst_description}</p>
+              <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                <span className="flex items-center gap-1">
+                  <Tag className="h-4 w-4" />
+                  {auction.category?.cat_name}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-4 w-4" />
+                  {dayjs(auction.lst_created_at).format('DD MMM YYYY')}
+                </span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="text-center p-4 bg-surface rounded-lg">
                 <DollarSign className="h-5 w-5 mx-auto text-primary" />
-                <p className="mt-2 text-2xl font-bold">₹{auction.currentBid.toLocaleString()}</p>
+                <p className="mt-2 text-xl font-bold">₹{Number(auction.lst_current_bid || 0).toLocaleString()}</p>
                 <p className="text-sm text-gray-500">Current Bid</p>
               </div>
               <div className="text-center p-4 bg-surface rounded-lg">
-                <Users className="h-5 w-5 mx-auto text-primary" />
-                <p className="mt-2 text-2xl font-bold">{auction.bidCount}</p>
-                <p className="text-sm text-gray-500">Total Bids</p>
+                <DollarSign className="h-5 w-5 mx-auto text-gray-400" />
+                <p className="mt-2 text-xl font-bold">₹{Number(auction.lst_price || 0).toLocaleString()}</p>
+                <p className="text-sm text-gray-500">Starting Price</p>
               </div>
               <div className="text-center p-4 bg-surface rounded-lg">
-                <Clock className="h-5 w-5 mx-auto text-primary" />
-                <p className="mt-2 text-2xl font-bold">
-                  {dayjs(auction.endsAt).diff(dayjs(), 'hour')}h
-                </p>
-                <p className="text-sm text-gray-500">Time Left</p>
+                <Users className="h-5 w-5 mx-auto text-primary" />
+                <p className="mt-2 text-xl font-bold">{auction.total_participants || 0}</p>
+                <p className="text-sm text-gray-500">Participants</p>
+              </div>
+              <div className="text-center p-4 bg-surface rounded-lg">
+                <Gavel className="h-5 w-5 mx-auto text-primary" />
+                <p className="mt-2 text-xl font-bold">{auction.total_bids || 0}</p>
+                <p className="text-sm text-gray-500">Total Bids</p>
               </div>
             </div>
 
-            {isActive && (
-              <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-700">
-                  <AlertCircle className="h-5 w-5" />
-                  <span className="font-medium">Auction ends {dayjs(auction.endsAt).fromNow()}</span>
+            {/* Time status */}
+            <div className={`mt-6 p-4 rounded-lg ${isEnded ? 'bg-gray-50 border border-gray-200' : isEndingSoon ? 'bg-red-50 border border-red-200' : 'bg-amber-50 border border-amber-200'}`}>
+              <div className={`flex items-center gap-2 ${isEnded ? 'text-gray-700' : isEndingSoon ? 'text-red-700' : 'text-amber-700'}`}>
+                <Clock className="h-5 w-5" />
+                <span className="font-medium">{getTimeLeftText()}</span>
+                <span className="text-sm ml-2">
+                  (Ends: {endsAt.format('DD MMM YYYY, hh:mm A')})
+                </span>
+              </div>
+            </div>
+
+            {/* Vehicle Details */}
+            {auction.vehicle_details && (
+              <div className="mt-6">
+                <h3 className="font-semibold mb-3">Vehicle Details</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {auction.vehicle_details.lvd_fuel_type && (
+                    <div className="p-3 bg-surface rounded-lg">
+                      <p className="text-sm text-gray-500">Fuel Type</p>
+                      <p className="font-medium">{auction.vehicle_details.lvd_fuel_type}</p>
+                    </div>
+                  )}
+                  {auction.vehicle_details.lvd_transmission && (
+                    <div className="p-3 bg-surface rounded-lg">
+                      <p className="text-sm text-gray-500">Transmission</p>
+                      <p className="font-medium">{auction.vehicle_details.lvd_transmission}</p>
+                    </div>
+                  )}
+                  {auction.vehicle_details.lvd_body_type && (
+                    <div className="p-3 bg-surface rounded-lg">
+                      <p className="text-sm text-gray-500">Body Type</p>
+                      <p className="font-medium">{auction.vehicle_details.lvd_body_type}</p>
+                    </div>
+                  )}
+                  {auction.vehicle_details.lvd_ownership && (
+                    <div className="p-3 bg-surface rounded-lg">
+                      <p className="text-sm text-gray-500">Ownership</p>
+                      <p className="font-medium">{auction.vehicle_details.lvd_ownership.replace(/_/g, ' ')}</p>
+                    </div>
+                  )}
+                  {auction.vehicle_details.lvd_year && (
+                    <div className="p-3 bg-surface rounded-lg">
+                      <p className="text-sm text-gray-500">Year</p>
+                      <p className="font-medium">{auction.vehicle_details.lvd_year}</p>
+                    </div>
+                  )}
+                  {auction.vehicle_details.lvd_kilometers && (
+                    <div className="p-3 bg-surface rounded-lg">
+                      <p className="text-sm text-gray-500">Kilometers</p>
+                      <p className="font-medium">{auction.vehicle_details.lvd_kilometers.toLocaleString()} km</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
+        {/* Sidebar */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5" /> Time Management
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={timeExtension}
-                  onChange={(e) => setTimeExtension(e.target.value)}
-                  className="w-20"
-                  min="1"
-                  max="48"
-                />
-                <Button onClick={handleExtendTime}>Extend</Button>
-              </div>
-              <p className="text-sm text-gray-500">Extend auction by 1-48 hours</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Seller Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">{seller?.name || auction.listing.sellerName}</p>
-                  <p className="text-sm text-gray-500">Verified Seller</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Highest Bidder</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+          {highestBid && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
                   <Gavel className="h-5 w-5 text-green-600" />
+                  Highest Bidder
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <User className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{highestBid.bidder.user_full_name}</p>
+                    <p className="text-sm text-green-600 font-semibold">
+                      ₹{Number(highestBid.bid_amount).toLocaleString()}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{auction.highestBidder || 'Anonymous'}</p>
-                  <p className="text-sm text-gray-500">Current highest bid</p>
+                <div className="mt-3 text-sm text-gray-500 space-y-1">
+                  <p className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    {highestBid.bidder.user_email}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    {highestBid.bidder.user_primary_phone}
+                  </p>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Auction Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Min Increment</span>
+                <span className="font-medium">₹{Number(auction.lst_min_increment || 0).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Views</span>
+                <span className="font-medium flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  {auction.lst_view_count || 0}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Total Bids</span>
+                <span className="font-medium">{auction.total_bids || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Participants</span>
+                <span className="font-medium">{auction.total_participants || 0}</span>
               </div>
             </CardContent>
           </Card>
         </div>
 
+        {/* Participants Section */}
+        {auction.participants && auction.participants.length > 0 && (
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Participants ({auction.total_participants})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Participant</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Phone</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Highest Bid</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Total Bids</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auction.participants.map((participant, index) => (
+                      <tr key={participant.user.user_id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${index === 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100'} font-medium text-sm`}>
+                              {index + 1}
+                            </div>
+                            <span className="font-medium">{participant.user.user_full_name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-500">{participant.user.user_email}</td>
+                        <td className="py-3 px-4 text-gray-500">{participant.user.user_primary_phone}</td>
+                        <td className="py-3 px-4">
+                          <Badge variant={participant.engagement_status === 'ACTIVE' ? 'active' : 'outline'}>
+                            {participant.engagement_status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 font-semibold">₹{participant.highest_bid.toLocaleString()}</td>
+                        <td className="py-3 px-4">{participant.total_bids}</td>
+                        <td className="py-3 px-4 text-gray-500">{dayjs(participant.joined_at).format('DD MMM, hh:mm A')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Bid History */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-lg">Bid History</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Gavel className="h-5 w-5" />
+              Bid History ({auction.total_bids})
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {mockBids.map((bid, index) => (
-                <div key={bid.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-surface font-medium">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{bid.bidder}</p>
-                      <p className="text-sm text-gray-500">{bid.time}</p>
-                    </div>
-                  </div>
-                  <p className="font-semibold">₹{bid.amount.toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
+            {auction.bids && auction.bids.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">#</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Bidder</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Phone</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Bid Amount</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auction.bids.map((bid, index) => (
+                      <tr key={bid.bid_id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-full ${index === 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100'} font-medium text-sm`}>
+                            {index + 1}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-medium">{bid.bidder.user_full_name}</td>
+                        <td className="py-3 px-4 text-gray-500">{bid.bidder.user_email}</td>
+                        <td className="py-3 px-4 text-gray-500">{bid.bidder.user_primary_phone}</td>
+                        <td className={`py-3 px-4 font-semibold ${index === 0 ? 'text-green-600' : ''}`}>
+                          ₹{Number(bid.bid_amount).toLocaleString()}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="text-sm">{dayjs(bid.bid_created_at).format('DD MMM, hh:mm A')}</p>
+                            <p className="text-xs text-gray-400">{dayjs(bid.bid_created_at).fromNow()}</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Gavel className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                <p>No bids yet</p>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Engagements */}
+        {auction.engagements && auction.engagements.length > 0 && (
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="text-lg">Engagements</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {auction.engagements.map((engagement) => (
+                  <div key={engagement.eng_id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium">{engagement.user.user_full_name}</span>
+                      <Badge variant={engagement.eng_status === 'ACTIVE' ? 'active' : 'outline'}>
+                        {engagement.eng_status}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500">{engagement.user.user_email}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Joined: {dayjs(engagement.eng_created_at).format('DD MMM YYYY, hh:mm A')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )

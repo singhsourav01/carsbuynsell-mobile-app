@@ -329,11 +329,16 @@ try {
         }
       })
 
+      console.log('Upload response:', uploadResponse.data)
+
       imageIds = uploadResponse.data.data.map(
         (file: any) => file.file_id
       )
+      
+      console.log('Image IDs to send:', imageIds)
 
     } catch (error) {
+      console.error('Image upload error:', error)
       toast.error("Failed to upload images")
       setUploadingImages(false)
       return
@@ -347,6 +352,8 @@ try {
     ...formData,
     user_portfolio: imageIds,
   }
+  
+  console.log('Final payload being sent:', payload)
 
   if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
     payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
