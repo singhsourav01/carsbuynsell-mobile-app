@@ -31,7 +31,7 @@ import { apiClient } from '@/services/api-client'
 import { useAuthStore } from '@/store/auth-store'
 import { CreateListingPayload, Listing, VehicleDetailsPayload } from '@/types/listing-types'
 import axios from 'axios'
-const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file/upload'
+const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file'
 const columns: ColumnDef<Listing>[] = [
   {
     accessorKey: 'lst_title',
@@ -304,119 +304,118 @@ export default function Listings() {
       return
     }
 
-try {
-  setIsCreating(true)
-
-  let imageIds: string[] = []
-
-  // STEP 1: Upload images first
-  if (listingImages.length > 0) {
     try {
-      setUploadingImages(true)
+      setIsCreating(true)
 
-      const formDataUpload = new FormData()
+      // STEP 1: Prepare payload
+      const payload: CreateListingPayload = {
+        ...formData,
+      }
 
-      listingImages.forEach((file) => {
-        formDataUpload.append("files", file)
-      })
+      if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
+        payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
+      }
 
-      formDataUpload.append("type", "portfolio")
+      if (payload.lst_type !== 'AUCTION') {
+        payload.lst_auction_end = undefined
+        payload.lst_min_increment = undefined
+      }
 
-      const uploadResponse = await axios.post(`${FILE_SERVICE_URL}?id=${selectedUser.user_id}`, formDataUpload, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const normalizedVehicleDetails: VehicleDetailsPayload = {
+        fuel_type: vehicleDetails.fuel_type || undefined,
+        transmission: vehicleDetails.transmission || undefined,
+        body_type: vehicleDetails.body_type || undefined,
+        ownership: vehicleDetails.ownership || undefined,
+        year: vehicleDetails.year === '' ? undefined : Number(vehicleDetails.year),
+        kilometers: vehicleDetails.kilometers === '' ? undefined : Number(vehicleDetails.kilometers),
+      }
 
-      console.log('Upload response:', uploadResponse.data)
+      const hasVehicleDetails = Object.values(normalizedVehicleDetails).some((value) => value !== undefined)
 
-      imageIds = uploadResponse.data.data.map(
-        (file: any) => file.file_id
+      if (hasVehicleDetails) {
+        payload.vehicle_details = normalizedVehicleDetails
+      }
+
+      console.log('Creating listing payload:', payload)
+
+      // STEP 2: Create listing FIRST
+      const createResponse = await apiClient.post(
+        `http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`,
+        payload
       )
-      
-      console.log('Image IDs to send:', imageIds)
 
-    } catch (error) {
-      console.error('Image upload error:', error)
-      toast.error("Failed to upload images")
-      setUploadingImages(false)
-      return
-    }
+      console.log(createResponse.data, 'create response')
 
-    setUploadingImages(false)
-  }
+      const listingId = createResponse.data?.data?.lst_id
 
-  // STEP 2: Create listing with backend-expected payload shape
-  const payload: CreateListingPayload = {
-    ...formData,
-    user_portfolio: imageIds,
-  }
-  
-  console.log('Final payload being sent:', payload)
+      if (!listingId) {
+        throw new Error('Listing ID not returned')
+      }
 
-  if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
-    payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
-  }
+      // STEP 3: Upload images AFTER listing creation
+      if (listingImages.length > 0) {
+        try {
+          setUploadingImages(true)
 
-  if (payload.lst_type !== 'AUCTION') {
-    payload.lst_auction_end = undefined
-    payload.lst_min_increment = undefined
-  }
+          const formDataUpload = new FormData()
 
-  const normalizedVehicleDetails: VehicleDetailsPayload = {
-    fuel_type: vehicleDetails.fuel_type || undefined,
-    transmission: vehicleDetails.transmission || undefined,
-    body_type: vehicleDetails.body_type || undefined,
-    ownership: vehicleDetails.ownership || undefined,
-    year: vehicleDetails.year === '' ? undefined : Number(vehicleDetails.year),
-    kilometers: vehicleDetails.kilometers === '' ? undefined : Number(vehicleDetails.kilometers),
-  }
+          listingImages.forEach((file) => {
+            formDataUpload.append('files', file)
+          })
 
-  const hasVehicleDetails = Object.values(normalizedVehicleDetails).some((value) => value !== undefined)
+          formDataUpload.append('type', 'portfolio')
 
-  if (hasVehicleDetails) {
-    payload.vehicle_details = normalizedVehicleDetails
-  }
+          const uploadResponse = await axios.post(
+            `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${listingId}&user_id=${selectedUser.user_id}`,
+            formDataUpload,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          )
 
-  const createResponse = await apiClient.post(
-    `http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`,
-    payload
-  )
+          console.log('Image upload success:', uploadResponse.data)
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError)
+          toast.error('Listing created but image upload failed')
+        }
 
-  console.log(createResponse.data, " here is create response")
+        setUploadingImages(false)
+      }
 
-  toast.success("Listing created successfully! Status: ACTIVE")
+      toast.success('Listing created successfully! Status: ACTIVE')
 
-  setCreateOpen(false)
+      setCreateOpen(false)
 
-  // Reset form
-  setFormData({
-    lst_title: '',
-    lst_description: '',
-    lst_category_id: '',
-    lst_type: 'BUY_NOW',
-    lst_price: 0,
-    lst_auction_end: '',
-    lst_min_increment: 0,
-  })
-  setVehicleDetails({
-    fuel_type: '',
-    transmission: '',
-    body_type: '',
-    ownership: '',
-    year: '',
-    kilometers: '',
-  })
+      // Reset form
+      setFormData({
+        lst_title: '',
+        lst_description: '',
+        lst_category_id: '',
+        lst_type: 'BUY_NOW',
+        lst_price: 0,
+        lst_auction_end: '',
+        lst_min_increment: 0,
+      })
+      setVehicleDetails({
+        fuel_type: '',
+        transmission: '',
+        body_type: '',
+        ownership: '',
+        year: '',
+        kilometers: '',
+      })
 
-  setListingImages([])
-  setSelectedUser(null)
-  setUserSearch('')
-  setShowUserDropdown(false)
+      setListingImages([])
+      setSelectedUser(null)
+      setUserSearch('')
+      setShowUserDropdown(false)
 
-  fetchListings(currentPage)
+      fetchListings(currentPage)
 
-} catch (error: any) {
+    } catch (error: any) {
 
   console.error('Error creating listing:', error)
 
