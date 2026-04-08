@@ -76,6 +76,10 @@ export interface Listing {
         limg_url: string
         limg_order: number
     }[]
+    user_portfolio?: {
+        file_id: string
+        file_signed_url: string
+    }[]
 }
 
 // Auction types

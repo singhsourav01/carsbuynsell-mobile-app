@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { ArrowLeft, Edit, Save, Trash2, DollarSign, Calendar, User, Tag, Loader2 } from 'lucide-react'
+import { ArrowLeft, Edit, Save, Trash2, IndianRupee, Calendar, User, Tag, Loader2 } from 'lucide-react'
 import dayjs from 'dayjs'
 import { apiClient } from '@/services/api-client'
 import { Listing } from '@/types/listing-types'
@@ -266,7 +266,7 @@ export default function ListingDetail() {
                     <span>{listing.category?.cat_name}</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-500">
-                    <DollarSign className="h-4 w-4" />
+                    <IndianRupee className="h-4 w-4" />
                     <span>₹{Number(listing.lst_price).toLocaleString()}</span>
                   </div>
                   {listing.lst_current_bid && (

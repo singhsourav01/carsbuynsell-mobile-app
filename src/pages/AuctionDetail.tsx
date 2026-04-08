@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/services/api-client'
 import { AuctionDetail as AuctionDetailType } from '@/types/listing-types'
 import { toast } from 'sonner'
-import { ArrowLeft, Clock, Users, DollarSign, Gavel, User, Eye, Tag, Calendar, Loader2, Mail, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Clock, Users, IndianRupee, Gavel, User, Eye, Tag, Calendar, Loader2, Mail, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -196,12 +196,12 @@ export default function AuctionDetail() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="text-center p-4 bg-surface rounded-lg">
-                <DollarSign className="h-5 w-5 mx-auto text-primary" />
+                <IndianRupee className="h-5 w-5 mx-auto text-primary" />
                 <p className="mt-2 text-xl font-bold">₹{Number(auction.lst_current_bid || 0).toLocaleString()}</p>
                 <p className="text-sm text-gray-500">Current Bid</p>
               </div>
               <div className="text-center p-4 bg-surface rounded-lg">
-                <DollarSign className="h-5 w-5 mx-auto text-gray-400" />
+                <IndianRupee className="h-5 w-5 mx-auto text-gray-400" />
                 <p className="mt-2 text-xl font-bold">₹{Number(auction.lst_price || 0).toLocaleString()}</p>
                 <p className="text-sm text-gray-500">Starting Price</p>
               </div>

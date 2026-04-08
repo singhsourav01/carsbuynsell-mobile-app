@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { mockSellRequests, mockUsers } from '@/types/mock-data'
 import { toast } from 'sonner'
-import { ArrowLeft, Check, X, User, DollarSign, Calendar, FileText, Car } from 'lucide-react'
+import { ArrowLeft, Check, X, User, IndianRupee, Calendar, FileText, Car } from 'lucide-react'
 import dayjs from 'dayjs'
 
 export default function SellRequestDetail() {
@@ -85,7 +85,7 @@ export default function SellRequestDetail() {
                   <Car className="h-4 w-4" /> {request.category}
                 </span>
                 <span className="flex items-center gap-1">
-                  <DollarSign className="h-4 w-4" /> ₹{request.expectedPrice.toLocaleString()}
+                  <IndianRupee className="h-4 w-4" /> ₹{request.expectedPrice.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function SellRequestDetail() {
 
             <div className="grid grid-cols-3 gap-4 mt-6">
               <div className="text-center p-4 bg-surface rounded-lg">
-                <DollarSign className="h-5 w-5 mx-auto text-primary" />
+                <IndianRupee className="h-5 w-5 mx-auto text-primary" />
                 <p className="mt-2 text-xl font-bold">₹{request.expectedPrice.toLocaleString()}</p>
                 <p className="text-sm text-gray-500">Expected Price</p>
               </div>

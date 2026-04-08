@@ -9,6 +9,8 @@ import Listings from './pages/Listings'
 import ListingDetail from './pages/ListingDetail'
 import Auctions from './pages/Auctions'
 import AuctionDetail from './pages/AuctionDetail'
+import BuyNow from './pages/BuyNow'
+import BuyNowDetail from './pages/BuyNowDetail'
 import SellRequests from './pages/SellRequests'
 import SellRequestDetail from './pages/SellRequestDetail'
 import Deals from './pages/Deals'
@@ -39,6 +41,8 @@ function App() {
             
             <Route path="auctions" element={<Auctions />} />
             <Route path="auctions/:id" element={<AuctionDetail />} />
+            <Route path="buy-now" element={<BuyNow />} />
+            <Route path="buy-now/:id" element={<BuyNowDetail />} />
             
             <Route path="sell-requests" element={<SellRequests />} />
             <Route path="sell-requests/:id" element={<SellRequestDetail />} />
