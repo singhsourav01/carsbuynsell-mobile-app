@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/services/api-client'
 import { AuctionDetail as AuctionDetailType } from '@/types/listing-types'
 import { toast } from 'sonner'
-import { ArrowLeft, Clock, Users, DollarSign, Gavel, User, Eye, Tag, Calendar, Loader2, Mail, Phone } from 'lucide-react'
+import { ArrowLeft, Clock, Users, DollarSign, Gavel, User, Eye, Tag, Calendar, Loader2, Mail, Phone, ChevronLeft, ChevronRight } from 'lucide-react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 
@@ -20,6 +20,7 @@ export default function AuctionDetail() {
   
   const [auction, setAuction] = useState<AuctionDetailType | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const handleBack = () => {
     navigate(`/auctions?page=${fromPage}`)
@@ -61,6 +62,17 @@ export default function AuctionDetail() {
     )
   }
 
+  // Get images from user_portfolio
+  const images = (auction as any).user_portfolio || []
+  
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length)
+  }
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
+  }
+
   const endsAt = dayjs(auction.lst_auction_end)
   const now = dayjs()
   const isEnded = endsAt.isBefore(now)
@@ -96,13 +108,41 @@ export default function AuctionDetail() {
         {/* Main auction info */}
         <Card className="lg:col-span-2">
           <CardContent className="pt-6">
+            {/* Image Slider */}
             <div className="relative">
-              {auction.images && auction.images[0]?.limg_url ? (
-                <img
-                  src={auction.images[0].limg_url}
-                  alt={auction.lst_title}
-                  className="w-full h-64 object-cover rounded-lg"
-                />
+              {images.length > 0 ? (
+                <>
+                  <img
+                    src={images[currentImageIndex].file_signed_url}
+                    alt={`${auction.lst_title} - Image ${currentImageIndex + 1}`}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                  {/* Navigation Arrows */}
+                  {images.length > 1 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+                        onClick={prevImage}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+                        onClick={nextImage}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </>
+                  )}
+                  {/* Image Counter Badge */}
+                  <Badge className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white">
+                    {currentImageIndex + 1} / {images.length}
+                  </Badge>
+                </>
               ) : (
                 <div className="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
                   No Image
@@ -117,6 +157,27 @@ export default function AuctionDetail() {
                 )}
               </div>
             </div>
+
+            {/* Thumbnail Strip */}
+            {images.length > 1 && (
+              <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+                {images.map((img: any, index: number) => (
+                  <button
+                    key={img.file_id}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      index === currentImageIndex ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img
+                      src={img.file_signed_url}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="mt-6">
               <h2 className="text-2xl font-bold">{auction.lst_title}</h2>

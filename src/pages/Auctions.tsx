@@ -17,6 +17,12 @@ function AuctionCard({ auction, currentPage }: { auction: Auction; currentPage: 
   const isEnded = endsAt.isBefore(now)
   const isEndingSoon = !isEnded && hoursLeft < 24
 
+  // Get first image from user_portfolio or fallback to images array
+  const portfolioImages = (auction as any).user_portfolio || []
+  const firstImage = portfolioImages.length > 0 
+    ? portfolioImages[0].file_signed_url 
+    : auction.images?.[0]?.limg_url
+
   const getTimeLeftText = () => {
     if (isEnded) return 'Ended'
     if (hoursLeft < 1) {
@@ -36,9 +42,9 @@ function AuctionCard({ auction, currentPage }: { auction: Auction; currentPage: 
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex gap-4">
-          {auction.images && auction.images[0]?.limg_url ? (
+          {firstImage ? (
             <img
-              src={auction.images[0].limg_url}
+              src={firstImage}
               alt={auction.lst_title}
               className="h-24 w-24 rounded-lg object-cover"
             />
