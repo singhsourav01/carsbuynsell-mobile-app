@@ -544,7 +544,7 @@ export default function Listings() {
       setFeaturingListingId(listing.lst_id)
       const newFeaturedStatus = !listing.lst_is_featured
       
-      await apiClient.patch(`/admin/listings/${listing.lst_id}/feature`, {
+      await apiClient.patch(`user/admin/listings/${listing.lst_id}/feature`, {
         is_featured: newFeaturedStatus
       })
       
@@ -579,7 +579,7 @@ export default function Listings() {
       header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          {/* <Button 
+          <Button 
             variant="ghost" 
             size="icon"
             title={row.original.lst_is_featured ? 'Remove from featured' : 'Mark as featured'}
@@ -592,7 +592,7 @@ export default function Listings() {
             ) : (
               <Star className={`h-4 w-4 ${row.original.lst_is_featured ? 'fill-amber-500' : ''}`} />
             )}
-          </Button> */}
+          </Button>
           <Button variant="ghost" size="icon" onClick={() => navigate(`/listings/${row.original.lst_id}`)}>
             <Eye className="h-4 w-4" />
           </Button>
