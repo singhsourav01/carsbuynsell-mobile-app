@@ -21,6 +21,8 @@ import Reports from './pages/Reports'
 // import Settings from './pages/Settings'
 import ProtectedRoute from './components/ProtectedRoute'
 import RoleRoute from './components/RoleRoute'
+import VehicleRecords from './pages/VehicleRecords'
+import VehicleRecordDetail from './pages/VehicleRecordDetail'
 
 function App() {
   return (
@@ -46,6 +48,10 @@ function App() {
             
             <Route path="sell-requests" element={<SellRequests />} />
             <Route path="sell-requests/:id" element={<SellRequestDetail />} />
+            
+            <Route path="vehicle-records" element={<VehicleRecords />} />
+            <Route path="vehicle-records/:id" element={<VehicleRecordDetail />}
+/>
             
             <Route path="deals" element={<Deals />} />
             <Route path="deals/:id" element={<DealDetail />} />

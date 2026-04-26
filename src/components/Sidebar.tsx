@@ -21,7 +21,7 @@ const navItems = [
   { name: 'Listings', href: '/listings', icon: Car, roles: ['ADMIN', 'MODERATOR'] },
   { name: 'Auctions', href: '/auctions', icon: Gavel, roles: ['ADMIN', 'MODERATOR'] },
   { name: 'Buy Now', href: '/buy-now', icon: FileText, roles: ['ADMIN', 'MODERATOR'] },
-  { name: 'Vehicle Records', href: '/vehicle-record', icon: Handshake, roles: ['ADMIN', 'MODERATOR'] },
+  { name: 'Vehicle Records', href: '/vehicle-records', icon: Handshake, roles: ['ADMIN', 'MODERATOR'] },
   // { name: 'Deals', href: '/deals', icon: Handshake, roles: ['ADMIN', 'MODERATOR'] },
   // { name: 'Categories', href: '/categories', icon: Tags, roles: ['ADMIN'] },
   // { name: 'Subscriptions', href: '/subscriptions', icon: CreditCard, roles: ['ADMIN'] },
