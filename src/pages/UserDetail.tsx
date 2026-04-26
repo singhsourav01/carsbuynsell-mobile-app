@@ -213,11 +213,11 @@ export default function UserDetail() {
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5" /> Profile Information
             </CardTitle>
-            {!isEditing && (
+            {/* {!isEditing && (
               <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                 <Edit className="mr-2 h-4 w-4" /> Edit
               </Button>
-            )}
+            )} */}
           </CardHeader>
           <CardContent>
             {isEditing ? (

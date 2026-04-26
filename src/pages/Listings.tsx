@@ -38,9 +38,9 @@ const columns: ColumnDef<Listing>[] = [
     header: 'Listing',
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        {row.original.images && row.original.images[0] && row.original.images[0].limg_url ? (
+        {row.original.user_portfolio?.[0] && row.original.user_portfolio[0].file_signed_url ? (
           <img
-            src={row.original.images[0].limg_url}
+            src={row.original.user_portfolio[0].file_signed_url}
             alt={row.original.lst_title || 'Listing Image'}
             className="h-12 w-12 rounded-md object-cover"
           />
@@ -116,8 +116,11 @@ export default function Listings() {
   const [featuringListingId, setFeaturingListingId] = useState<string | null>(null)
 
   const [listingImages, setListingImages] = useState<File[]>([])
-  const [, setUploadingImages] = useState(false)
-  
+  const [editListingImages, setEditListingImages] = useState<File[]>([])
+  const [existingImages, setExistingImages] = useState<any[]>([])
+  const [removedImages, setRemovedImages] = useState<string[]>([])
+   const [, setUploadingImages] = useState(false)
+    
   // Real Data State
   const [listings, setListings] = useState<Listing[]>([])
   const [isLoadingListings, setIsLoadingListings] = useState(true)
@@ -376,6 +379,53 @@ export default function Listings() {
             }
           )
 
+          if (editListingImages.length > 0) {
+  try {
+    await Promise.all(
+      removedImages.map((fileId) =>
+        axios.delete(
+          `${FILE_SERVICE_URL}/delete/${fileId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        )
+      )
+    )
+
+  } catch (error) {
+    console.error("Failed deleting images:", error)
+    toast.error("Some images could not be removed")
+  }
+}
+if (editListingImages.length > 0) {
+  try {
+    const uploadForm = new FormData()
+
+    editListingImages.forEach((file) => {
+      uploadForm.append("files", file)
+    })
+
+    uploadForm.append("type", "portfolio")
+
+    await axios.post(
+      `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${editingListing.lst_id}&user_id=${editingListing.lst_seller_id}`,
+      uploadForm,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    )
+
+  } catch (error) {
+    console.error("Upload failed:", error)
+    toast.error("Listing updated but image upload failed")
+  }
+}
+
           console.log('Image upload success:', uploadResponse.data)
         } catch (uploadError) {
           console.error('Image upload failed:', uploadError)
@@ -451,8 +501,33 @@ export default function Listings() {
       year: vd?.lvd_year || '',
       kilometers: vd?.lvd_kilometers || '',
     })
+    setExistingImages(listing.user_portfolio || [])
+    setRemovedImages([])
+    setEditListingImages([])
     setEditOpen(true)
   }
+  const handleDeleteImage = async (fileId: string) => {
+  try {
+    await axios.delete(
+      `${FILE_SERVICE_URL}/delete/${fileId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+
+    setExistingImages(prev =>
+      prev.filter(img => img.file_id !== fileId)
+    )
+
+    toast.success("Image deleted")
+
+  } catch (error) {
+    console.error("Delete failed:", error)
+    toast.error("Failed to delete image")
+  }
+}
 
   const handleEditListing = async () => {
     if (!editingListing) return
@@ -501,6 +576,33 @@ export default function Listings() {
         `http://13.127.188.130:3002/user/listings/${editingListing.lst_id}`,
         payload
       )
+
+      if (editListingImages.length > 0) {
+  try {
+    const uploadForm = new FormData()
+
+    editListingImages.forEach(file => {
+      uploadForm.append("files", file)
+    })
+
+    uploadForm.append("type", "portfolio")
+
+    await axios.post(
+      `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${editingListing.lst_id}&user_id=${editingListing.lst_seller_id}`,
+      uploadForm,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    )
+
+  } catch (error) {
+    console.error("Upload failed:", error)
+    toast.error("Listing updated but image upload failed")
+  }
+}
 
       toast.success("Listing updated successfully!")
 
@@ -1125,6 +1227,41 @@ export default function Listings() {
                 />
               </div>
             </div>
+
+<div className="grid gap-2">
+  <Label>Edit Images</Label>
+
+  {existingImages.length > 0 && (
+    <div className="flex flex-wrap gap-2">
+      {existingImages.map((img: any) => (
+        <div key={img.file_id} className="relative">
+          <img
+            src={img.file_signed_url}
+            className="w-20 h-20 object-cover rounded-md"
+          />
+
+          <button
+            type="button"
+            onClick={() => handleDeleteImage(img.file_id)}
+            className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-1 text-xs"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  )}
+
+  <input
+    type="file"
+    multiple
+    accept="image/png,image/jpeg,image/jpg"
+    onChange={(e) => {
+      if (!e.target.files) return
+      setEditListingImages(Array.from(e.target.files))
+    }}
+  />
+</div>
 
             {editFormData.lst_type === 'AUCTION' && (
               <div className="grid grid-cols-2 gap-4 border-l-4 border-primary pl-4 py-2 bg-primary/5 rounded-r-md">

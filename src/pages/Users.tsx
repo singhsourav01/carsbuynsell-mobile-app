@@ -159,7 +159,7 @@ export default function Users() {
     fetchUsers(1)
   }, [])
 
-  const statusFilters = ['All', 'Pending', 'Accepted', 'Rejected', 'Blocked']
+  const statusFilters = ['All']
 
   const filteredUsers =
     filter === 'All'
@@ -177,7 +177,7 @@ export default function Users() {
         </div>
       </div>
 
-      <div className="flex gap-2">
+      {/* <div className="flex gap-2">
         {statusFilters.map((statusItem) => (
           <Button
             key={statusItem}
@@ -188,7 +188,7 @@ export default function Users() {
             {statusItem}
           </Button>
         ))}
-      </div>
+      </div> */}
 
       {isLoading ? (
         <div className="flex h-[400px] items-center justify-center">
