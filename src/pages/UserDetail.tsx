@@ -50,7 +50,7 @@ export default function UserDetail() {
   const fetchUser = async () => {
     try {
       setIsLoading(true)
-      const response = await apiClient.get(`http://13.127.188.130:3002/user/users/${id}`)
+      const response = await apiClient.get(`https://admin.carsbuynsell.com/api/user/users/${id}`)
       const userData = response.data?.data
       if (userData) {
         setUser(userData)
@@ -80,7 +80,7 @@ export default function UserDetail() {
   const handleSave = async () => {
     try {
       setIsSaving(true)
-      await apiClient.put('http://13.127.188.130:3002/user/users/users-profile', {
+      await apiClient.put('https://admin.carsbuynsell.com/api/user/users/users-profile', {
         user_id: id,
         ...formData,
       })

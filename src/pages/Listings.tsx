@@ -31,7 +31,7 @@ import { apiClient } from '@/services/api-client'
 import { useAuthStore } from '@/store/auth-store'
 import { CreateListingPayload, Listing, VehicleDetailsPayload } from '@/types/listing-types'
 import axios from 'axios'
-const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file'
+const FILE_SERVICE_URL = 'https://admin.carsbuynsell.com/api/file'
 const columns: ColumnDef<Listing>[] = [
   {
     accessorKey: 'lst_title',
@@ -197,7 +197,7 @@ export default function Listings() {
     try {
       setIsLoadingListings(true)
 
-      const response = await apiClient.get(`http://13.127.188.130:3002/user/listings?page=${page}&limit=12`)
+      const response = await apiClient.get(`https://admin.carsbuynsell.com/api/user/listings?page=${page}&limit=12`)
 
       const raw = response.data
 
@@ -229,7 +229,7 @@ export default function Listings() {
   const fetchCategories = async () => {
     try {
       setIsLoadingCategories(true)
-      const response = await apiClient.get('http://13.127.188.130:3002/user/categories')
+      const response = await apiClient.get('https://admin.carsbuynsell.com/api/user/categories')
       const data = response.data.data?.categories || response.data.data || []
       if (Array.isArray(data)) {
         setCategories(data.map((c: any) => ({
@@ -255,8 +255,8 @@ export default function Listings() {
       setIsLoadingUsers(true)
 
       const url = search
-        ? `http://13.127.188.130:3002/user/users?search=${search}`
-        : `http://13.127.188.130:3002/user/users`
+        ? `https://admin.carsbuynsell.com/api/user/users?search=${search}`
+        : `https://admin.carsbuynsell.com/api/user/users`
 
       const response = await apiClient.get(url)
 
@@ -343,7 +343,7 @@ export default function Listings() {
 
       // STEP 2: Create listing FIRST
       const createResponse = await apiClient.post(
-        `http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`,
+        `https://admin.carsbuynsell.com/api/user/listings?user_id=${selectedUser.user_id}`,
         payload
       )
 
@@ -573,7 +573,7 @@ if (editListingImages.length > 0) {
       }
 
       await apiClient.patch(
-        `http://13.127.188.130:3002/user/listings/${editingListing.lst_id}`,
+        `https://admin.carsbuynsell.com/api/user/listings/${editingListing.lst_id}`,
         payload
       )
 

@@ -62,7 +62,7 @@ export default function Dashboard() {
       try {
         setLoading(true)
         // Using the full URL as provided by the user to ensure it works regardless of baseURL config
-        const response = await apiClient.get('http://13.127.188.130:3002/user/admin/dashboard')
+        const response = await apiClient.get('https://admin.carsbuynsell.com/api/user/admin/dashboard')
         if (response.data.success) {
           setData(response.data.data)
         } else {

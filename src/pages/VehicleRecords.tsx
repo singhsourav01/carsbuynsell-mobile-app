@@ -31,7 +31,7 @@ export default function VehicleRecords() {
       setLoading(true)
 
       const res = await apiClient.get(
-        "http://13.127.188.130:3002/user/vehicle-records"
+        "https://admin.carsbuynsell.com/api/user/vehicle-records"
       )
 
       setRecords(res.data?.data?.records || [])

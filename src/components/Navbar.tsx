@@ -43,10 +43,6 @@ export default function Navbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="relative rounded-full p-2 hover:bg-surface">
-          <Bell className="h-5 w-5 text-gray-500" />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-        </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

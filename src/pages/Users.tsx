@@ -127,7 +127,7 @@ export default function Users() {
   const fetchUsers = async (page: number = 1) => {
     try {
       setIsLoading(true)
-      const response = await apiClient.get(`http://13.127.188.130:3002/user/users?page=${page}&page_size=${pageSize}`)
+      const response = await apiClient.get(`https://admin.carsbuynsell.com/api/user/users?page=${page}&page_size=${pageSize}`)
       const raw = response.data
       const usersArray = raw?.data?.data || raw?.data || raw?.users || []
       const paginationData = raw?.data?.link || null

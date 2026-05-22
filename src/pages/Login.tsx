@@ -9,7 +9,7 @@ import { Car, AlertCircle } from 'lucide-react'
 import axios from 'axios'
 import type { AuthResponse } from '@/types'
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://13.127.188.130:3001'
+const AUTH_API_URL =  'https://admin.carsbuynsell.com/api'
 
 export default function Login() {
   const navigate = useNavigate()

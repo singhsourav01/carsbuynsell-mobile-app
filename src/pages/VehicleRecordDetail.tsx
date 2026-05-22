@@ -30,7 +30,7 @@ export default function VehicleRecordDetail() {
       setLoading(true)
 
       const res = await apiClient.get(
-        `http://13.127.188.130:3002/user/vehicle-records/${id}`
+        `https://admin.carsbuynsell.com/api/user/vehicle-records/${id}`
       )
 
       setRecord(res.data?.data)
@@ -90,6 +90,12 @@ export default function VehicleRecordDetail() {
         <div>
           <p className="text-sm text-gray-500">Seller</p>
           <p>{record.user?.user_full_name}</p>
+        </div>  <div>
+          <p className="text-sm text-gray-500">Phone</p>
+          <p>{record.user?.user_primary_phone}</p>
+        </div>  <div>
+          <p className="text-sm text-gray-500">Email</p>
+          <p>{record.user?.user_email}</p>
         </div>
 
         <div>
