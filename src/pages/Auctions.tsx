@@ -1,42 +1,57 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { apiClient } from '@/services/api-client'
-import { Auction } from '@/types/listing-types'
-import { toast } from 'sonner'
-import dayjs from 'dayjs'
-import { Gavel, Clock, Users, ExternalLink, Loader2, ChevronLeft, ChevronRight, Eye } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { apiClient } from "@/services/api-client";
+import { Auction } from "@/types/listing-types";
+import { toast } from "sonner";
+import dayjs from "dayjs";
+import {
+  Gavel,
+  Clock,
+  Users,
+  ExternalLink,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-function AuctionCard({ auction, currentPage }: { auction: Auction; currentPage: number }) {
-  const navigate = useNavigate()
-  const endsAt = dayjs(auction.lst_auction_end)
-  const now = dayjs()
-  const hoursLeft = endsAt.diff(now, 'hour')
-  const isEnded = endsAt.isBefore(now)
-  const isEndingSoon = !isEnded && hoursLeft < 24
+function AuctionCard({
+  auction,
+  currentPage,
+}: {
+  auction: Auction;
+  currentPage: number;
+}) {
+  const navigate = useNavigate();
+  const endsAt = dayjs(auction.lst_auction_end);
+  const now = dayjs();
+  const hoursLeft = endsAt.diff(now, "hour");
+  const isEnded = endsAt.isBefore(now);
+  const isEndingSoon = !isEnded && hoursLeft < 24;
 
   // Get first image from user_portfolio or fallback to images array
-  const portfolioImages = (auction as any).user_portfolio || []
-  const firstImage = portfolioImages.length > 0 
-    ? portfolioImages[0].file_signed_url 
-    : auction.images?.[0]?.limg_url
+  const portfolioImages = (auction as any).user_portfolio || [];
+  const firstImage =
+    portfolioImages.length > 0
+      ? portfolioImages[0].file_signed_url
+      : auction.images?.[0]?.limg_url;
 
   const getTimeLeftText = () => {
-    if (isEnded) return 'Ended'
+    if (isEnded) return "Ended";
     if (hoursLeft < 1) {
-      const minutesLeft = endsAt.diff(now, 'minute')
-      return `Ends in ${minutesLeft} min`
+      const minutesLeft = endsAt.diff(now, "minute");
+      return `Ends in ${minutesLeft} min`;
     }
-    if (hoursLeft < 24) return `Ends in ${hoursLeft}h`
-    const daysLeft = endsAt.diff(now, 'day')
-    return `Ends in ${daysLeft}d`
-  }
-  
+    if (hoursLeft < 24) return `Ends in ${hoursLeft}h`;
+    const daysLeft = endsAt.diff(now, "day");
+    return `Ends in ${daysLeft}d`;
+  };
+
   const handleViewDetails = () => {
-    navigate(`/auctions/${auction.lst_id}?from=${currentPage}`)
-  }
+    navigate(`/auctions/${auction.lst_id}?from=${currentPage}`);
+  };
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -57,20 +72,32 @@ function AuctionCard({ auction, currentPage }: { auction: Auction; currentPage: 
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="font-semibold truncate">{auction.lst_title}</h3>
-                <p className="text-sm text-gray-500">{auction.category?.cat_name}</p>
+                <p className="text-sm text-gray-500">
+                  {auction.category?.cat_name}
+                </p>
               </div>
-              <Badge variant={auction.lst_status === 'ACTIVE' && !isEnded ? 'active' : 'outline'}>
-                {isEnded ? 'Ended' : auction.lst_status}
+              <Badge
+                variant={
+                  auction.lst_status === "ACTIVE" && !isEnded
+                    ? "active"
+                    : "outline"
+                }
+              >
+                {isEnded ? "Ended" : auction.lst_status}
               </Badge>
             </div>
             <div className="mt-2 flex items-center gap-4 text-sm">
               <div>
                 <p className="text-gray-500">Current Bid</p>
-                <p className="font-semibold">₹{Number(auction.lst_current_bid || 0).toLocaleString()}</p>
+                <p className="font-semibold">
+                  ₹{Number(auction.lst_current_bid || 0).toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="text-gray-500">Bids</p>
-                <p className="font-semibold">{auction._count?.bids || auction.lst_bid_count || 0}</p>
+                <p className="font-semibold">
+                  {auction._count?.bids || auction.lst_bid_count || 0}
+                </p>
               </div>
               <div>
                 <p className="text-gray-500">Views</p>
@@ -78,74 +105,87 @@ function AuctionCard({ auction, currentPage }: { auction: Auction; currentPage: 
               </div>
             </div>
             <div className="mt-2 flex items-center gap-2">
-              <Clock className={`h-4 w-4 ${isEnded ? 'text-gray-400' : isEndingSoon ? 'text-red-500' : 'text-gray-400'}`} />
-              <span className={`text-sm ${isEnded ? 'text-gray-500' : isEndingSoon ? 'text-red-500 font-medium' : 'text-gray-500'}`}>
+              <Clock
+                className={`h-4 w-4 ${isEnded ? "text-gray-400" : isEndingSoon ? "text-red-500" : "text-gray-400"}`}
+              />
+              <span
+                className={`text-sm ${isEnded ? "text-gray-500" : isEndingSoon ? "text-red-500 font-medium" : "text-gray-500"}`}
+              >
                 {getTimeLeftText()}
               </span>
             </div>
           </div>
         </div>
         <div className="mt-4 flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1" onClick={handleViewDetails}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            onClick={handleViewDetails}
+          >
             <ExternalLink className="mr-2 h-4 w-4" />
             View Details
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export default function Auctions() {
-  const [searchParams, setSearchParams] = useSearchParams()
-  const [auctions, setAuctions] = useState<Auction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Get page from URL or default to 1
-  const currentPage = parseInt(searchParams.get('page') || '1', 10)
-  
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
+
   const [pagination, setPagination] = useState({
     count: 0,
     page: 1,
-    take: 10
-  })
+    take: 10,
+  });
 
   const fetchAuctions = async (page: number = 1) => {
     try {
-      setIsLoading(true)
-      const response = await apiClient.get(`/user/admin/auctions?page=${page}`)
-      const data = response.data?.data
-      
-      setAuctions(data?.auctions || [])
+      setIsLoading(true);
+      const response = await apiClient.get(`/user/admin/auctions?page=${page}`);
+      const data = response.data?.data;
+
+      setAuctions(data?.auctions || []);
       setPagination({
         count: data?.count || 0,
         page: data?.page || 1,
-        take: data?.take || 10
-      })
+        take: data?.take || 10,
+      });
     } catch (error) {
-      console.error('Failed to fetch auctions:', error)
-      toast.error('Failed to load auctions')
+      console.error("Failed to fetch auctions:", error);
+      toast.error("Failed to load auctions");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchAuctions(currentPage)
-  }, [currentPage])
+    fetchAuctions(currentPage);
+  }, [currentPage]);
 
-  const totalPages = Math.ceil(pagination.count / pagination.take)
-  const now = dayjs()
-  
-  const activeAuctions = auctions.filter(a => 
-    a.lst_status === 'ACTIVE' && dayjs(a.lst_auction_end).isAfter(now)
-  )
-  const endingSoonAuctions = auctions.filter(a => 
-    a.lst_status === 'ACTIVE' && 
-    dayjs(a.lst_auction_end).isAfter(now) && 
-    dayjs(a.lst_auction_end).diff(now, 'hour') < 24
-  )
-  const totalBids = auctions.reduce((acc, a) => acc + (a._count?.bids || a.lst_bid_count || 0), 0)
+  const totalPages = Math.ceil(pagination.count / pagination.take);
+  const now = dayjs();
+
+  const activeAuctions = auctions.filter(
+    (a) => a.lst_status === "ACTIVE" && dayjs(a.lst_auction_end).isAfter(now),
+  );
+  const endingSoonAuctions = auctions.filter(
+    (a) =>
+      a.lst_status === "ACTIVE" &&
+      dayjs(a.lst_auction_end).isAfter(now) &&
+      dayjs(a.lst_auction_end).diff(now, "hour") < 24,
+  );
+  const totalBids = auctions.reduce(
+    (acc, a) => acc + (a._count?.bids || a.lst_bid_count || 0),
+    0,
+  );
 
   if (isLoading) {
     return (
@@ -153,7 +193,7 @@ export default function Auctions() {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <p className="text-gray-500 mt-2">Loading auctions...</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -168,7 +208,9 @@ export default function Auctions() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Active Auctions</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Active Auctions
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -179,7 +221,9 @@ export default function Auctions() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Total Bids</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Total Bids
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -190,7 +234,9 @@ export default function Auctions() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Ending Soon</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">
+              Ending Soon
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -203,9 +249,11 @@ export default function Auctions() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">All Auctions ({pagination.count})</h2>
+          <h2 className="text-lg font-semibold">
+            All Auctions ({pagination.count})
+          </h2>
         </div>
-        
+
         {auctions.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
@@ -216,7 +264,11 @@ export default function Auctions() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {auctions.map((auction) => (
-              <AuctionCard key={auction.lst_id} auction={auction} currentPage={currentPage} />
+              <AuctionCard
+                key={auction.lst_id}
+                auction={auction}
+                currentPage={currentPage}
+              />
             ))}
           </div>
         )}
@@ -227,7 +279,9 @@ export default function Auctions() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSearchParams({ page: String(Math.max(1, currentPage - 1)) })}
+              onClick={() =>
+                setSearchParams({ page: String(Math.max(1, currentPage - 1)) })
+              }
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -239,7 +293,11 @@ export default function Auctions() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setSearchParams({ page: String(Math.min(totalPages, currentPage + 1)) })}
+              onClick={() =>
+                setSearchParams({
+                  page: String(Math.min(totalPages, currentPage + 1)),
+                })
+              }
               disabled={currentPage === totalPages}
             >
               Next
@@ -249,5 +307,5 @@ export default function Auctions() {
         )}
       </div>
     </div>
-  )
+  );
 }
