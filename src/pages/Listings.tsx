@@ -1,22 +1,33 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { DataTable } from '@/components/DataTable'
-import { Button } from '@/components/ui/button'
-import StatusBadge from '@/components/StatusBadge'
-import ConfirmDialog from '@/components/ConfirmDialog'
-import { ColumnDef } from '@tanstack/react-table'
-import dayjs from 'dayjs'
-import { toast } from 'sonner'
-import { Eye, Pencil, Trash2, Plus, Loader2, Search, User as UserIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { DataTable } from "@/components/DataTable";
+import { Button } from "@/components/ui/button";
+import StatusBadge from "@/components/StatusBadge";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { ColumnDef } from "@tanstack/react-table";
+import dayjs from "dayjs";
+import { toast } from "sonner";
+import {
+  Eye,
+  Pencil,
+  Trash2,
+  Plus,
+  Loader2,
+  Search,
+  User as UserIcon,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -25,23 +36,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { apiClient } from '@/services/api-client'
-import { useAuthStore } from '@/store/auth-store'
-import { CreateListingPayload, Listing, VehicleDetailsPayload } from '@/types/listing-types'
-import axios from 'axios'
-const FILE_SERVICE_URL = 'http://13.127.188.130:3003/file'
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { apiClient } from "@/services/api-client";
+import { useAuthStore } from "@/store/auth-store";
+import {
+  CreateListingPayload,
+  Listing,
+  VehicleDetailsPayload,
+} from "@/types/listing-types";
+import axios from "axios";
+const FILE_SERVICE_URL = "http://65.2.10.30:3003/file";
 const columns: ColumnDef<Listing>[] = [
   {
-    accessorKey: 'lst_title',
-    header: 'Listing',
+    accessorKey: "lst_title",
+    header: "Listing",
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        {row.original.user_portfolio?.[0] && row.original.user_portfolio[0].file_signed_url ? (
+        {row.original.user_portfolio?.[0] &&
+        row.original.user_portfolio[0].file_signed_url ? (
           <img
             src={row.original.user_portfolio[0].file_signed_url}
-            alt={row.original.lst_title || 'Listing Image'}
+            alt={row.original.lst_title || "Listing Image"}
             className="h-12 w-12 rounded-md object-cover"
           />
         ) : (
@@ -50,23 +66,33 @@ const columns: ColumnDef<Listing>[] = [
           </div>
         )}
         <div>
-          <p className="font-medium text-navy">{row.original.lst_title || 'Untitled Listing'}</p>
-          <p className="text-xs text-slate-500">{row.original.category?.cat_name || 'No Category'}</p>
+          <p className="font-medium text-navy">
+            {row.original.lst_title || "Untitled Listing"}
+          </p>
+          <p className="text-xs text-slate-500">
+            {row.original.category?.cat_name || "No Category"}
+          </p>
         </div>
       </div>
     ),
   },
   {
-    accessorKey: 'lst_type',
-    header: 'Type',
-    cell: ({ row }) => <StatusBadge status={((row.original.lst_type || 'BUY_NOW').toLowerCase() as any)} />,
+    accessorKey: "lst_type",
+    header: "Type",
+    cell: ({ row }) => (
+      <StatusBadge
+        status={(row.original.lst_type || "BUY_NOW").toLowerCase() as any}
+      />
+    ),
   },
   {
-    accessorKey: 'lst_price',
-    header: 'Price',
+    accessorKey: "lst_price",
+    header: "Price",
     cell: ({ row }) => (
       <div>
-        <p className="font-medium text-navy">₹{Number(row.original.lst_price || 0).toLocaleString()}</p>
+        <p className="font-medium text-navy">
+          ₹{Number(row.original.lst_price || 0).toLocaleString()}
+        </p>
         {row.original.lst_current_bid && (
           <p className="text-xs text-slate-500">
             Bid: ₹{Number(row.original.lst_current_bid).toLocaleString()}
@@ -76,17 +102,20 @@ const columns: ColumnDef<Listing>[] = [
     ),
   },
   {
-    accessorKey: 'lst_is_featured',
-    header: 'Featured',
-    cell: ({ row }) => row.original.lst_is_featured ? (
-      <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
-        Featured
-      </span>
-    ) : '-',
+    accessorKey: "lst_is_featured",
+    header: "Featured",
+    cell: ({ row }) =>
+      row.original.lst_is_featured ? (
+        <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-wider">
+          Featured
+        </span>
+      ) : (
+        "-"
+      ),
   },
   {
-    accessorKey: 'lst_view_count',
-    header: 'Views',
+    accessorKey: "lst_view_count",
+    header: "Views",
     cell: ({ row }) => (
       <div className="flex items-center gap-1 text-slate-500">
         <Eye className="h-3 w-3" />
@@ -95,233 +124,247 @@ const columns: ColumnDef<Listing>[] = [
     ),
   },
   {
-    accessorKey: 'lst_created_at',
-    header: 'Created',
-    cell: ({ row }) => row.original.lst_created_at ? dayjs(row.original.lst_created_at).format('DD MMM YYYY') : 'N/A',
+    accessorKey: "lst_created_at",
+    header: "Created",
+    cell: ({ row }) =>
+      row.original.lst_created_at
+        ? dayjs(row.original.lst_created_at).format("DD MMM YYYY")
+        : "N/A",
   },
-]
+];
 
 export default function Listings() {
-  const navigate = useNavigate()
-  const token = useAuthStore((state) => state.token)
-  const [typeFilter, setTypeFilter] = useState('All')
-  const [statusFilter, setStatusFilter] = useState('All')
-  const [deleteOpen, setDeleteOpen] = useState(false)
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
-  const [editOpen, setEditOpen] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [editingListing, setEditingListing] = useState<Listing | null>(null)
-  const [featuringListingId, setFeaturingListingId] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const token = useAuthStore((state) => state.token);
+  const [typeFilter, setTypeFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [featuringListingId, setFeaturingListingId] = useState<string | null>(
+    null,
+  );
 
-  const [listingImages, setListingImages] = useState<File[]>([])
-  const [editListingImages, setEditListingImages] = useState<File[]>([])
-  const [existingImages, setExistingImages] = useState<any[]>([])
-  const [removedImages, setRemovedImages] = useState<string[]>([])
-   const [, setUploadingImages] = useState(false)
-    
+  const [listingImages, setListingImages] = useState<File[]>([]);
+  const [editListingImages, setEditListingImages] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
+  const [removedImages, setRemovedImages] = useState<string[]>([]);
+  const [, setUploadingImages] = useState(false);
+
   // Real Data State
-  const [listings, setListings] = useState<Listing[]>([])
-  const [isLoadingListings, setIsLoadingListings] = useState(true)
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(false)
-  
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [isLoadingListings, setIsLoadingListings] = useState(true);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>(
+    [],
+  );
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+
   // Pagination State
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     total: 0,
     totalPages: 1,
     hasNextPage: false,
     hasPrevPage: false,
-    limit: 12
-  })
+    limit: 12,
+  });
 
   // User Selection State
-  const [userSearch, setUserSearch] = useState('')
-  const [users, setUsers] = useState<any[]>([])
-  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<any | null>(null)
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [userSearch, setUserSearch] = useState("");
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
   const [formData, setFormData] = useState<CreateListingPayload>({
-    lst_title: '',
-    lst_description: '',
-    lst_category_id: '',
-    lst_type: 'BUY_NOW',
+    lst_title: "",
+    lst_description: "",
+    lst_category_id: "",
+    lst_type: "BUY_NOW",
     lst_price: 0,
-    lst_auction_end: '',
+    lst_auction_end: "",
     lst_min_increment: 0,
-  })
+  });
   const [editFormData, setEditFormData] = useState<CreateListingPayload>({
-    lst_title: '',
-    lst_description: '',
-    lst_category_id: '',
-    lst_type: 'BUY_NOW',
+    lst_title: "",
+    lst_description: "",
+    lst_category_id: "",
+    lst_type: "BUY_NOW",
     lst_price: 0,
-    lst_auction_end: '',
+    lst_auction_end: "",
     lst_min_increment: 0,
-  })
+  });
   const [vehicleDetails, setVehicleDetails] = useState<{
-    fuel_type: '' | NonNullable<VehicleDetailsPayload['fuel_type']>
-    transmission: '' | NonNullable<VehicleDetailsPayload['transmission']>
-    body_type: '' | NonNullable<VehicleDetailsPayload['body_type']>
-    ownership: '' | NonNullable<VehicleDetailsPayload['ownership']>
-    year: number | ''
-    kilometers: number | ''
+    fuel_type: "" | NonNullable<VehicleDetailsPayload["fuel_type"]>;
+    transmission: "" | NonNullable<VehicleDetailsPayload["transmission"]>;
+    body_type: "" | NonNullable<VehicleDetailsPayload["body_type"]>;
+    ownership: "" | NonNullable<VehicleDetailsPayload["ownership"]>;
+    year: number | "";
+    kilometers: number | "";
   }>({
-    fuel_type: '',
-    transmission: '',
-    body_type: '',
-    ownership: '',
-    year: '',
-    kilometers: '',
-  })
+    fuel_type: "",
+    transmission: "",
+    body_type: "",
+    ownership: "",
+    year: "",
+    kilometers: "",
+  });
   const [editVehicleDetails, setEditVehicleDetails] = useState<{
-    fuel_type: '' | NonNullable<VehicleDetailsPayload['fuel_type']>
-    transmission: '' | NonNullable<VehicleDetailsPayload['transmission']>
-    body_type: '' | NonNullable<VehicleDetailsPayload['body_type']>
-    ownership: '' | NonNullable<VehicleDetailsPayload['ownership']>
-    year: number | ''
-    kilometers: number | ''
+    fuel_type: "" | NonNullable<VehicleDetailsPayload["fuel_type"]>;
+    transmission: "" | NonNullable<VehicleDetailsPayload["transmission"]>;
+    body_type: "" | NonNullable<VehicleDetailsPayload["body_type"]>;
+    ownership: "" | NonNullable<VehicleDetailsPayload["ownership"]>;
+    year: number | "";
+    kilometers: number | "";
   }>({
-    fuel_type: '',
-    transmission: '',
-    body_type: '',
-    ownership: '',
-    year: '',
-    kilometers: '',
-  })
+    fuel_type: "",
+    transmission: "",
+    body_type: "",
+    ownership: "",
+    year: "",
+    kilometers: "",
+  });
 
   const fetchListings = async (page: number = 1) => {
     try {
-      setIsLoadingListings(true)
+      setIsLoadingListings(true);
 
-      const response = await apiClient.get(`http://13.127.188.130:3002/user/listings?page=${page}&limit=12`)
+      const response = await apiClient.get(
+        `http://65.2.10.30:3002/user/listings?page=${page}&limit=12`,
+      );
 
-      const raw = response.data
+      const raw = response.data;
 
-      console.log(response.data, " here is response")
+      console.log(response.data, " here is response");
 
-      const listingsArray = raw?.data?.data || []
-      const paginationData = raw?.data?.pagination
+      const listingsArray = raw?.data?.data || [];
+      const paginationData = raw?.data?.pagination;
 
-      setListings(Array.isArray(listingsArray) ? listingsArray : [])
-      
+      setListings(Array.isArray(listingsArray) ? listingsArray : []);
+
       if (paginationData) {
         setPagination({
           total: paginationData.total || 0,
           totalPages: paginationData.totalPages || 1,
           hasNextPage: paginationData.hasNextPage || false,
           hasPrevPage: paginationData.hasPrevPage || false,
-          limit: paginationData.limit || 12
-        })
+          limit: paginationData.limit || 12,
+        });
       }
-
     } catch (error) {
-      console.error('Failed to fetch listings:', error)
-      toast.error('Failed to load listings data')
+      console.error("Failed to fetch listings:", error);
+      toast.error("Failed to load listings data");
     } finally {
-      setIsLoadingListings(false)
+      setIsLoadingListings(false);
     }
-  }
+  };
 
   const fetchCategories = async () => {
     try {
-      setIsLoadingCategories(true)
-      const response = await apiClient.get('http://13.127.188.130:3002/user/categories')
-      const data = response.data.data?.categories || response.data.data || []
+      setIsLoadingCategories(true);
+      const response = await apiClient.get(
+        "http://65.2.10.30:3002/user/categories",
+      );
+      const data = response.data.data?.categories || response.data.data || [];
       if (Array.isArray(data)) {
-        setCategories(data.map((c: any) => ({
-          id: c.cat_id || c.id,
-          name: c.cat_name || c.name,
-        })))
+        setCategories(
+          data.map((c: any) => ({
+            id: c.cat_id || c.id,
+            name: c.cat_name || c.name,
+          })),
+        );
       }
     } catch (error) {
-      console.error('Failed to fetch categories:', error)
-      toast.error('Failed to load categories')
+      console.error("Failed to fetch categories:", error);
+      toast.error("Failed to load categories");
     } finally {
-      setIsLoadingCategories(false)
+      setIsLoadingCategories(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchListings(currentPage)
-    fetchCategories()
-  }, [currentPage])
+    fetchListings(currentPage);
+    fetchCategories();
+  }, [currentPage]);
 
-  const fetchUsers = async (search: string = '') => {
+  const fetchUsers = async (search: string = "") => {
     try {
-      setIsLoadingUsers(true)
+      setIsLoadingUsers(true);
 
       const url = search
-        ? `http://13.127.188.130:3002/user/users?search=${search}`
-        : `http://13.127.188.130:3002/user/users`
+        ? `http://65.2.10.30:3002/user/users?search=${search}`
+        : `http://65.2.10.30:3002/user/users`;
 
-      const response = await apiClient.get(url)
+      const response = await apiClient.get(url);
 
-      const raw = response.data
+      const raw = response.data;
 
-      const usersArray =
-        raw?.data?.data ||
-        raw?.data ||
-        []
+      const usersArray = raw?.data?.data || raw?.data || [];
 
-      setUsers(Array.isArray(usersArray) ? usersArray : [])
-
+      setUsers(Array.isArray(usersArray) ? usersArray : []);
     } catch (error) {
-      console.error('Failed to fetch users:', error)
+      console.error("Failed to fetch users:", error);
     } finally {
-      setIsLoadingUsers(false)
+      setIsLoadingUsers(false);
     }
-  }
+  };
 
   // User Search Effect
   useEffect(() => {
-    if (userSearch.length > 0 && userSearch.length < 2) return
+    if (userSearch.length > 0 && userSearch.length < 2) return;
 
     const timer = setTimeout(() => {
       if (userSearch.length >= 2) {
-        fetchUsers(userSearch)
+        fetchUsers(userSearch);
       } else if (userSearch.length === 0 && createOpen) {
         // If they clear the search, show all users again if dialog is open
-        fetchUsers('')
+        fetchUsers("");
       }
-    }, 500)
+    }, 500);
 
-    return () => clearTimeout(timer)
-  }, [userSearch, createOpen])
+    return () => clearTimeout(timer);
+  }, [userSearch, createOpen]);
 
   const handleCreateListing = async () => {
     if (!selectedUser) {
-      toast.error('Please select a seller first')
-      return
+      toast.error("Please select a seller first");
+      return;
     }
-    if (!formData.lst_title || !formData.lst_category_id || !formData.lst_price) {
-      toast.error('Please fill in all required fields')
-      return
+    if (
+      !formData.lst_title ||
+      !formData.lst_category_id ||
+      !formData.lst_price
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
     }
 
-    if (formData.lst_type === 'AUCTION' && !formData.lst_auction_end) {
-      toast.error('Auction end time is required for Auctions')
-      return
+    if (formData.lst_type === "AUCTION" && !formData.lst_auction_end) {
+      toast.error("Auction end time is required for Auctions");
+      return;
     }
 
     try {
-      setIsCreating(true)
+      setIsCreating(true);
 
       // STEP 1: Prepare payload
       const payload: CreateListingPayload = {
         ...formData,
+      };
+
+      if (payload.lst_type === "AUCTION" && payload.lst_auction_end) {
+        payload.lst_auction_end = new Date(
+          payload.lst_auction_end,
+        ).toISOString();
       }
 
-      if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
-        payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
-      }
-
-      if (payload.lst_type !== 'AUCTION') {
-        payload.lst_auction_end = undefined
-        payload.lst_min_increment = undefined
+      if (payload.lst_type !== "AUCTION") {
+        payload.lst_auction_end = undefined;
+        payload.lst_min_increment = undefined;
       }
 
       const normalizedVehicleDetails: VehicleDetailsPayload = {
@@ -329,44 +372,50 @@ export default function Listings() {
         transmission: vehicleDetails.transmission || undefined,
         body_type: vehicleDetails.body_type || undefined,
         ownership: vehicleDetails.ownership || undefined,
-        year: vehicleDetails.year === '' ? undefined : Number(vehicleDetails.year),
-        kilometers: vehicleDetails.kilometers === '' ? undefined : Number(vehicleDetails.kilometers),
-      }
+        year:
+          vehicleDetails.year === "" ? undefined : Number(vehicleDetails.year),
+        kilometers:
+          vehicleDetails.kilometers === ""
+            ? undefined
+            : Number(vehicleDetails.kilometers),
+      };
 
-      const hasVehicleDetails = Object.values(normalizedVehicleDetails).some((value) => value !== undefined)
+      const hasVehicleDetails = Object.values(normalizedVehicleDetails).some(
+        (value) => value !== undefined,
+      );
 
       if (hasVehicleDetails) {
-        payload.vehicle_details = normalizedVehicleDetails
+        payload.vehicle_details = normalizedVehicleDetails;
       }
 
-      console.log('Creating listing payload:', payload)
+      console.log("Creating listing payload:", payload);
 
       // STEP 2: Create listing FIRST
       const createResponse = await apiClient.post(
-        `http://13.127.188.130:3002/user/listings?user_id=${selectedUser.user_id}`,
-        payload
-      )
+        `http://65.2.10.30:3002/user/listings?user_id=${selectedUser.user_id}`,
+        payload,
+      );
 
-      console.log(createResponse.data, 'create response')
+      console.log(createResponse.data, "create response");
 
-      const listingId = createResponse.data?.data?.lst_id
+      const listingId = createResponse.data?.data?.lst_id;
 
       if (!listingId) {
-        throw new Error('Listing ID not returned')
+        throw new Error("Listing ID not returned");
       }
 
       // STEP 3: Upload images AFTER listing creation
       if (listingImages.length > 0) {
         try {
-          setUploadingImages(true)
+          setUploadingImages(true);
 
-          const formDataUpload = new FormData()
+          const formDataUpload = new FormData();
 
           listingImages.forEach((file) => {
-            formDataUpload.append('files', file)
-          })
+            formDataUpload.append("files", file);
+          });
 
-          formDataUpload.append('type', 'portfolio')
+          formDataUpload.append("type", "portfolio");
 
           const uploadResponse = await axios.post(
             `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${listingId}&user_id=${selectedUser.user_id}`,
@@ -374,187 +423,177 @@ export default function Listings() {
             {
               headers: {
                 Authorization: `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data',
+                "Content-Type": "multipart/form-data",
               },
-            }
-          )
+            },
+          );
 
           if (editListingImages.length > 0) {
-  try {
-    await Promise.all(
-      removedImages.map((fileId) =>
-        axios.delete(
-          `${FILE_SERVICE_URL}/delete/${fileId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            try {
+              await Promise.all(
+                removedImages.map((fileId) =>
+                  axios.delete(`${FILE_SERVICE_URL}/delete/${fileId}`, {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }),
+                ),
+              );
+            } catch (error) {
+              console.error("Failed deleting images:", error);
+              toast.error("Some images could not be removed");
+            }
           }
-        )
-      )
-    )
+          if (editListingImages.length > 0) {
+            try {
+              const uploadForm = new FormData();
 
-  } catch (error) {
-    console.error("Failed deleting images:", error)
-    toast.error("Some images could not be removed")
-  }
-}
-if (editListingImages.length > 0) {
-  try {
-    const uploadForm = new FormData()
+              editListingImages.forEach((file) => {
+                uploadForm.append("files", file);
+              });
 
-    editListingImages.forEach((file) => {
-      uploadForm.append("files", file)
-    })
+              uploadForm.append("type", "portfolio");
 
-    uploadForm.append("type", "portfolio")
+              await axios.post(
+                `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${editingListing!.lst_id}&user_id=${editingListing!.lst_seller_id}`,
+                uploadForm,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data",
+                  },
+                },
+              );
+            } catch (error) {
+              console.error("Upload failed:", error);
+              toast.error("Listing updated but image upload failed");
+            }
+          }
 
-    await axios.post(
-      `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${editingListing.lst_id}&user_id=${editingListing.lst_seller_id}`,
-      uploadForm,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    )
-
-  } catch (error) {
-    console.error("Upload failed:", error)
-    toast.error("Listing updated but image upload failed")
-  }
-}
-
-          console.log('Image upload success:', uploadResponse.data)
+          console.log("Image upload success:", uploadResponse.data);
         } catch (uploadError) {
-          console.error('Image upload failed:', uploadError)
-          toast.error('Listing created but image upload failed')
+          console.error("Image upload failed:", uploadError);
+          toast.error("Listing created but image upload failed");
         }
 
-        setUploadingImages(false)
+        setUploadingImages(false);
       }
 
-      toast.success('Listing created successfully! Status: ACTIVE')
+      toast.success("Listing created successfully! Status: ACTIVE");
 
-      setCreateOpen(false)
+      setCreateOpen(false);
 
       // Reset form
       setFormData({
-        lst_title: '',
-        lst_description: '',
-        lst_category_id: '',
-        lst_type: 'BUY_NOW',
+        lst_title: "",
+        lst_description: "",
+        lst_category_id: "",
+        lst_type: "BUY_NOW",
         lst_price: 0,
-        lst_auction_end: '',
+        lst_auction_end: "",
         lst_min_increment: 0,
-      })
+      });
       setVehicleDetails({
-        fuel_type: '',
-        transmission: '',
-        body_type: '',
-        ownership: '',
-        year: '',
-        kilometers: '',
-      })
+        fuel_type: "",
+        transmission: "",
+        body_type: "",
+        ownership: "",
+        year: "",
+        kilometers: "",
+      });
 
-      setListingImages([])
-      setSelectedUser(null)
-      setUserSearch('')
-      setShowUserDropdown(false)
+      setListingImages([]);
+      setSelectedUser(null);
+      setUserSearch("");
+      setShowUserDropdown(false);
 
-      fetchListings(currentPage)
-
+      fetchListings(currentPage);
     } catch (error: any) {
+      console.error("Error creating listing:", error);
 
-  console.error('Error creating listing:', error)
-
-  toast.error(
-    error.response?.data?.message ||
-    'Failed to create listing'
-  )
-
-} finally {
-
-  setIsCreating(false)
-
-}
-  }
+      toast.error(error.response?.data?.message || "Failed to create listing");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   const openEditDialog = (listing: Listing) => {
-    setEditingListing(listing)
+    setEditingListing(listing);
     setEditFormData({
-      lst_title: listing.lst_title || '',
-      lst_description: listing.lst_description || '',
-      lst_category_id: listing.lst_category_id || listing.category?.cat_id || '',
-      lst_type: listing.lst_type || 'BUY_NOW',
+      lst_title: listing.lst_title || "",
+      lst_description: listing.lst_description || "",
+      lst_category_id:
+        listing.lst_category_id || listing.category?.cat_id || "",
+      lst_type: listing.lst_type || "BUY_NOW",
       lst_price: Number(listing.lst_price) || 0,
-      lst_auction_end: listing.lst_auction_end ? new Date(listing.lst_auction_end).toISOString().slice(0, 16) : '',
+      lst_auction_end: listing.lst_auction_end
+        ? new Date(listing.lst_auction_end).toISOString().slice(0, 16)
+        : "",
       lst_min_increment: Number(listing.lst_min_increment) || 0,
-    })
-    const vd = listing.vehicle_details
+    });
+    const vd = listing.vehicle_details;
     setEditVehicleDetails({
-      fuel_type: vd?.lvd_fuel_type || '',
-      transmission: vd?.lvd_transmission || '',
-      body_type: vd?.lvd_body_type || '',
-      ownership: vd?.lvd_ownership || '',
-      year: vd?.lvd_year || '',
-      kilometers: vd?.lvd_kilometers || '',
-    })
-    setExistingImages(listing.user_portfolio || [])
-    setRemovedImages([])
-    setEditListingImages([])
-    setEditOpen(true)
-  }
+      fuel_type: vd?.lvd_fuel_type || "",
+      transmission: vd?.lvd_transmission || "",
+      body_type: vd?.lvd_body_type || "",
+      ownership: vd?.lvd_ownership || "",
+      year: vd?.lvd_year || "",
+      kilometers: vd?.lvd_kilometers || "",
+    });
+    setExistingImages(listing.user_portfolio || []);
+    setRemovedImages([]);
+    setEditListingImages([]);
+    setEditOpen(true);
+  };
   const handleDeleteImage = async (fileId: string) => {
-  try {
-    await axios.delete(
-      `${FILE_SERVICE_URL}/delete/${fileId}`,
-      {
+    try {
+      await axios.delete(`${FILE_SERVICE_URL}/delete/${fileId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    )
+      });
 
-    setExistingImages(prev =>
-      prev.filter(img => img.file_id !== fileId)
-    )
+      setExistingImages((prev) => prev.filter((img) => img.file_id !== fileId));
 
-    toast.success("Image deleted")
-
-  } catch (error) {
-    console.error("Delete failed:", error)
-    toast.error("Failed to delete image")
-  }
-}
+      toast.success("Image deleted");
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete image");
+    }
+  };
 
   const handleEditListing = async () => {
-    if (!editingListing) return
-    if (!editFormData.lst_title || !editFormData.lst_category_id || !editFormData.lst_price) {
-      toast.error('Please fill in all required fields')
-      return
+    if (!editingListing) return;
+    if (
+      !editFormData.lst_title ||
+      !editFormData.lst_category_id ||
+      !editFormData.lst_price
+    ) {
+      toast.error("Please fill in all required fields");
+      return;
     }
 
-    if (editFormData.lst_type === 'AUCTION' && !editFormData.lst_auction_end) {
-      toast.error('Auction end time is required for Auctions')
-      return
+    if (editFormData.lst_type === "AUCTION" && !editFormData.lst_auction_end) {
+      toast.error("Auction end time is required for Auctions");
+      return;
     }
 
     try {
-      setIsEditing(true)
+      setIsEditing(true);
 
       const payload: CreateListingPayload = {
         ...editFormData,
+      };
+
+      if (payload.lst_type === "AUCTION" && payload.lst_auction_end) {
+        payload.lst_auction_end = new Date(
+          payload.lst_auction_end,
+        ).toISOString();
       }
 
-      if (payload.lst_type === 'AUCTION' && payload.lst_auction_end) {
-        payload.lst_auction_end = new Date(payload.lst_auction_end).toISOString()
-      }
-
-      if (payload.lst_type !== 'AUCTION') {
-        payload.lst_auction_end = undefined
-        payload.lst_min_increment = undefined
+      if (payload.lst_type !== "AUCTION") {
+        payload.lst_auction_end = undefined;
+        payload.lst_min_increment = undefined;
       }
 
       const normalizedVehicleDetails: VehicleDetailsPayload = {
@@ -562,143 +601,173 @@ if (editListingImages.length > 0) {
         transmission: editVehicleDetails.transmission || undefined,
         body_type: editVehicleDetails.body_type || undefined,
         ownership: editVehicleDetails.ownership || undefined,
-        year: editVehicleDetails.year === '' ? undefined : Number(editVehicleDetails.year),
-        kilometers: editVehicleDetails.kilometers === '' ? undefined : Number(editVehicleDetails.kilometers),
-      }
+        year:
+          editVehicleDetails.year === ""
+            ? undefined
+            : Number(editVehicleDetails.year),
+        kilometers:
+          editVehicleDetails.kilometers === ""
+            ? undefined
+            : Number(editVehicleDetails.kilometers),
+      };
 
-      const hasVehicleDetails = Object.values(normalizedVehicleDetails).some((value) => value !== undefined)
+      const hasVehicleDetails = Object.values(normalizedVehicleDetails).some(
+        (value) => value !== undefined,
+      );
 
       if (hasVehicleDetails) {
-        payload.vehicle_details = normalizedVehicleDetails
+        payload.vehicle_details = normalizedVehicleDetails;
       }
 
       await apiClient.patch(
-        `http://13.127.188.130:3002/user/listings/${editingListing.lst_id}`,
-        payload
-      )
+        `http://65.2.10.30:3002/user/listings/${editingListing.lst_id}`,
+        payload,
+      );
 
       if (editListingImages.length > 0) {
-  try {
-    const uploadForm = new FormData()
+        try {
+          const uploadForm = new FormData();
 
-    editListingImages.forEach(file => {
-      uploadForm.append("files", file)
-    })
+          editListingImages.forEach((file) => {
+            uploadForm.append("files", file);
+          });
 
-    uploadForm.append("type", "portfolio")
+          uploadForm.append("type", "portfolio");
 
-    await axios.post(
-      `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${editingListing.lst_id}&user_id=${editingListing.lst_seller_id}`,
-      uploadForm,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
+          await axios.post(
+            `${FILE_SERVICE_URL}/upload-listing-files?listing_id=${editingListing.lst_id}&user_id=${editingListing.lst_seller_id}`,
+            uploadForm,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            },
+          );
+        } catch (error) {
+          console.error("Upload failed:", error);
+          toast.error("Listing updated but image upload failed");
+        }
       }
-    )
 
-  } catch (error) {
-    console.error("Upload failed:", error)
-    toast.error("Listing updated but image upload failed")
-  }
-}
+      toast.success("Listing updated successfully!");
 
-      toast.success("Listing updated successfully!")
-
-      setEditOpen(false)
-      setEditingListing(null)
+      setEditOpen(false);
+      setEditingListing(null);
 
       // Reset edit form
       setEditFormData({
-        lst_title: '',
-        lst_description: '',
-        lst_category_id: '',
-        lst_type: 'BUY_NOW',
+        lst_title: "",
+        lst_description: "",
+        lst_category_id: "",
+        lst_type: "BUY_NOW",
         lst_price: 0,
-        lst_auction_end: '',
+        lst_auction_end: "",
         lst_min_increment: 0,
-      })
+      });
       setEditVehicleDetails({
-        fuel_type: '',
-        transmission: '',
-        body_type: '',
-        ownership: '',
-        year: '',
-        kilometers: '',
-      })
+        fuel_type: "",
+        transmission: "",
+        body_type: "",
+        ownership: "",
+        year: "",
+        kilometers: "",
+      });
 
-      fetchListings(currentPage)
-
+      fetchListings(currentPage);
     } catch (error: any) {
-      console.error('Error updating listing:', error)
-      toast.error(
-        error.response?.data?.message ||
-        'Failed to update listing'
-      )
+      console.error("Error updating listing:", error);
+      toast.error(error.response?.data?.message || "Failed to update listing");
     } finally {
-      setIsEditing(false)
+      setIsEditing(false);
     }
-  }
+  };
 
   const handleToggleFeatured = async (listing: Listing) => {
     try {
-      setFeaturingListingId(listing.lst_id)
-      const newFeaturedStatus = !listing.lst_is_featured
-      
+      setFeaturingListingId(listing.lst_id);
+      const newFeaturedStatus = !listing.lst_is_featured;
+
       await apiClient.patch(`user/admin/listings/${listing.lst_id}/feature`, {
-        is_featured: newFeaturedStatus
-      })
-      
+        is_featured: newFeaturedStatus,
+      });
+
       // Update local state
-      setListings(prev => prev.map(l => 
-        l.lst_id === listing.lst_id 
-          ? { ...l, lst_is_featured: newFeaturedStatus }
-          : l
-      ))
-      
-      toast.success(newFeaturedStatus ? 'Listing marked as featured' : 'Listing unfeatured')
+      setListings((prev) =>
+        prev.map((l) =>
+          l.lst_id === listing.lst_id
+            ? { ...l, lst_is_featured: newFeaturedStatus }
+            : l,
+        ),
+      );
+
+      toast.success(
+        newFeaturedStatus ? "Listing marked as featured" : "Listing unfeatured",
+      );
     } catch (error: any) {
-      console.error('Error toggling featured status:', error)
-      toast.error(error.response?.data?.message || 'Failed to update featured status')
+      console.error("Error toggling featured status:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to update featured status",
+      );
     } finally {
-      setFeaturingListingId(null)
+      setFeaturingListingId(null);
     }
-  }
+  };
 
   const filteredListings = listings.filter((listing) => {
-    if (!listing) return false
-    const typeMatch = typeFilter === 'All' || (listing.lst_type && listing.lst_type.toUpperCase() === typeFilter.toUpperCase())
-    const statusMatch = statusFilter === 'All' ||
-      (listing.lst_status && listing.lst_status.toLowerCase() === statusFilter.toLowerCase())
-    return typeMatch && statusMatch
-  })
+    if (!listing) return false;
+    const typeMatch =
+      typeFilter === "All" ||
+      (listing.lst_type &&
+        listing.lst_type.toUpperCase() === typeFilter.toUpperCase());
+    const statusMatch =
+      statusFilter === "All" ||
+      (listing.lst_status &&
+        listing.lst_status.toLowerCase() === statusFilter.toLowerCase());
+    return typeMatch && statusMatch;
+  });
 
   const actionColumns: ColumnDef<Listing>[] = [
     ...columns,
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
-            title={row.original.lst_is_featured ? 'Remove from featured' : 'Mark as featured'}
-            className={row.original.lst_is_featured ? 'text-amber-500' : 'text-gray-400'}
+            title={
+              row.original.lst_is_featured
+                ? "Remove from featured"
+                : "Mark as featured"
+            }
+            className={
+              row.original.lst_is_featured ? "text-amber-500" : "text-gray-400"
+            }
             disabled={featuringListingId === row.original.lst_id}
             onClick={() => handleToggleFeatured(row.original)}
           >
             {featuringListingId === row.original.lst_id ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Star className={`h-4 w-4 ${row.original.lst_is_featured ? 'fill-amber-500' : ''}`} />
+              <Star
+                className={`h-4 w-4 ${row.original.lst_is_featured ? "fill-amber-500" : ""}`}
+              />
             )}
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/listings/${row.original.lst_id}`)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(`/listings/${row.original.lst_id}`)}
+          >
             <Eye className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => openEditDialog(row.original)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => openEditDialog(row.original)}
+          >
             <Pencil className="h-4 w-4" />
           </Button>
           <Button
@@ -706,8 +775,8 @@ if (editListingImages.length > 0) {
             size="icon"
             className="text-red-600"
             onClick={() => {
-              setSelectedListing(row.original)
-              setDeleteOpen(true)
+              setSelectedListing(row.original);
+              setDeleteOpen(true);
             }}
           >
             <Trash2 className="h-4 w-4" />
@@ -715,10 +784,10 @@ if (editListingImages.length > 0) {
         </div>
       ),
     },
-  ]
+  ];
 
-  const typeFilters = ['All', 'Auction', 'Buy_now']
-  const statusFilters = ['All', 'Active', 'Sold', 'Expired', 'Draft']
+  const typeFilters = ["All", "Auction", "Buy_now"];
+  const statusFilters = ["All", "Active", "Sold", "Expired", "Draft"];
 
   return (
     <div className="space-y-6">
@@ -745,13 +814,17 @@ if (editListingImages.length > 0) {
               {/* User Selection */}
               <div className="grid gap-2 relative">
                 <Label htmlFor="user_search">Select Seller *</Label>
-                <div className={`relative flex items-center min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring ${selectedUser ? 'border-primary bg-primary/5' : ''}`}>
+                <div
+                  className={`relative flex items-center min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring ${selectedUser ? "border-primary bg-primary/5" : ""}`}
+                >
                   <Search className="h-4 w-4 shrink-0 text-slate-400 mr-2" />
 
                   {selectedUser ? (
                     <div className="flex items-center gap-2 bg-white px-2 py-0.5 rounded border border-primary/20 shadow-sm animate-in fade-in zoom-in duration-200">
                       <UserIcon className="h-3 w-3 text-primary" />
-                      <span className="font-medium text-primary text-xs">{selectedUser.user_full_name}</span>
+                      <span className="font-medium text-primary text-xs">
+                        {selectedUser.user_full_name}
+                      </span>
                       <button
                         onClick={() => setSelectedUser(null)}
                         className="ml-1 text-slate-400 hover:text-red-500 transition-colors"
@@ -766,62 +839,73 @@ if (editListingImages.length > 0) {
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       onFocus={() => {
-                        setShowUserDropdown(true)
+                        setShowUserDropdown(true);
 
                         if (users.length === 0) {
-                          fetchUsers('')
+                          fetchUsers("");
                         }
                       }}
                       onBlur={() => setShowUserDropdown(false)}
                     />
                   )}
 
-                  {isLoadingUsers && <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />}
-                </div>
-
-                {!selectedUser && showUserDropdown && (<div
-                  className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white border rounded-md shadow-lg max-h-[250px] overflow-y-auto"
-                  onMouseDown={(e) => e.preventDefault()}
-                >
-                  {isLoadingUsers ? (
-                    <div className="p-4 flex items-center justify-center text-slate-400">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      <span>Fetching users...</span>
-                    </div>
-                  ) : users.length > 0 ? (
-                    users.map((user) => (
-                      <div
-                        key={user.user_id}
-                        className="p-3 hover:bg-slate-50 cursor-pointer flex items-center justify-between border-b last:border-0"
-                        onClick={() => {
-                          setSelectedUser(user)
-                          setUserSearch('')
-                          setShowUserDropdown(false)
-                          setUsers([])
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                            <UserIcon className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-semibold text-navy leading-none mb-1">
-                              {user.user_full_name || user.full_name || user.name || user.fullName || 'User ID: ' + user.user_id?.split('-')[0]}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {user.user_email || user.email || user.user_primary_phone || user.phone || 'No contact details'}
-                            </p>
-                          </div>
-                        </div>
-                        <Plus className="h-4 w-4 text-slate-300" />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-slate-400 text-sm italic">
-                      No users found
-                    </div>
+                  {isLoadingUsers && (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />
                   )}
                 </div>
+
+                {!selectedUser && showUserDropdown && (
+                  <div
+                    className="absolute top-full left-0 right-0 z-[100] mt-1 bg-white border rounded-md shadow-lg max-h-[250px] overflow-y-auto"
+                    onMouseDown={(e) => e.preventDefault()}
+                  >
+                    {isLoadingUsers ? (
+                      <div className="p-4 flex items-center justify-center text-slate-400">
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                        <span>Fetching users...</span>
+                      </div>
+                    ) : users.length > 0 ? (
+                      users.map((user) => (
+                        <div
+                          key={user.user_id}
+                          className="p-3 hover:bg-slate-50 cursor-pointer flex items-center justify-between border-b last:border-0"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setUserSearch("");
+                            setShowUserDropdown(false);
+                            setUsers([]);
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                              <UserIcon className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-navy leading-none mb-1">
+                                {user.user_full_name ||
+                                  user.full_name ||
+                                  user.name ||
+                                  user.fullName ||
+                                  "User ID: " + user.user_id?.split("-")[0]}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {user.user_email ||
+                                  user.email ||
+                                  user.user_primary_phone ||
+                                  user.phone ||
+                                  "No contact details"}
+                              </p>
+                            </div>
+                          </div>
+                          <Plus className="h-4 w-4 text-slate-300" />
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-slate-400 text-sm italic">
+                        No users found
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -832,21 +916,31 @@ if (editListingImages.length > 0) {
                     id="lst_title"
                     placeholder="e.g., 2024 Hyundai Creta SX"
                     value={formData.lst_title}
-                    onChange={(e) => setFormData({ ...formData, lst_title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lst_title: e.target.value })
+                    }
                   />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="lst_category_id">Category *</Label>
                   <Select
                     value={formData.lst_category_id}
-                    onValueChange={(value) => setFormData({ ...formData, lst_category_id: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, lst_category_id: value })
+                    }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select category"} />
+                      <SelectValue
+                        placeholder={
+                          isLoadingCategories ? "Loading..." : "Select category"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -859,7 +953,12 @@ if (editListingImages.length > 0) {
                   id="lst_description"
                   placeholder="Mint condition, single owner, 5000km driven..."
                   value={formData.lst_description}
-                  onChange={(e) => setFormData({ ...formData, lst_description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      lst_description: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -868,7 +967,9 @@ if (editListingImages.length > 0) {
                   <Label htmlFor="lst_type">Listing Type *</Label>
                   <Select
                     value={formData.lst_type}
-                    onValueChange={(value: 'BUY_NOW' | 'AUCTION') => setFormData({ ...formData, lst_type: value })}
+                    onValueChange={(value: "BUY_NOW" | "AUCTION") =>
+                      setFormData({ ...formData, lst_type: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -881,19 +982,26 @@ if (editListingImages.length > 0) {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="lst_price">
-                    {formData.lst_type === 'AUCTION' ? 'Starting Price (₹) *' : 'Fixed Price (₹) *'}
+                    {formData.lst_type === "AUCTION"
+                      ? "Starting Price (₹) *"
+                      : "Fixed Price (₹) *"}
                   </Label>
                   <Input
                     id="lst_price"
                     type="number"
                     placeholder="0"
-                    value={formData.lst_price || ''}
-                    onChange={(e) => setFormData({ ...formData, lst_price: Number(e.target.value) })}
+                    value={formData.lst_price || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        lst_price: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
               </div>
 
-              {formData.lst_type === 'AUCTION' && (
+              {formData.lst_type === "AUCTION" && (
                 <div className="grid grid-cols-2 gap-4 border-l-4 border-primary pl-4 py-2 bg-primary/5 rounded-r-md">
                   <div className="grid gap-2">
                     <Label htmlFor="lst_auction_end">Auction End Time *</Label>
@@ -901,17 +1009,29 @@ if (editListingImages.length > 0) {
                       id="lst_auction_end"
                       type="datetime-local"
                       value={formData.lst_auction_end}
-                      onChange={(e) => setFormData({ ...formData, lst_auction_end: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          lst_auction_end: e.target.value,
+                        })
+                      }
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="lst_min_increment">Min Bid Increment (₹)</Label>
+                    <Label htmlFor="lst_min_increment">
+                      Min Bid Increment (₹)
+                    </Label>
                     <Input
                       id="lst_min_increment"
                       type="number"
                       placeholder="e.g. 5000"
-                      value={formData.lst_min_increment || ''}
-                      onChange={(e) => setFormData({ ...formData, lst_min_increment: Number(e.target.value) })}
+                      value={formData.lst_min_increment || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          lst_min_increment: Number(e.target.value),
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -927,8 +1047,8 @@ if (editListingImages.length > 0) {
                     multiple
                     accept="image/png,image/jpeg,image/jpg"
                     onChange={(e) => {
-                      if (!e.target.files) return
-                      setListingImages(Array.from(e.target.files))
+                      if (!e.target.files) return;
+                      setListingImages(Array.from(e.target.files));
                     }}
                   />
 
@@ -948,13 +1068,22 @@ if (editListingImages.length > 0) {
               </div>
 
               <div className="grid gap-4 border rounded-md p-4">
-                <Label className="text-sm font-semibold">Vehicle Details (optional)</Label>
+                <Label className="text-sm font-semibold">
+                  Vehicle Details (optional)
+                </Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Fuel Type</Label>
                     <Select
                       value={vehicleDetails.fuel_type}
-                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, fuel_type: value as NonNullable<VehicleDetailsPayload['fuel_type']> })}
+                      onValueChange={(value) =>
+                        setVehicleDetails({
+                          ...vehicleDetails,
+                          fuel_type: value as NonNullable<
+                            VehicleDetailsPayload["fuel_type"]
+                          >,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select fuel type" />
@@ -971,7 +1100,14 @@ if (editListingImages.length > 0) {
                     <Label>Transmission</Label>
                     <Select
                       value={vehicleDetails.transmission}
-                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, transmission: value as NonNullable<VehicleDetailsPayload['transmission']> })}
+                      onValueChange={(value) =>
+                        setVehicleDetails({
+                          ...vehicleDetails,
+                          transmission: value as NonNullable<
+                            VehicleDetailsPayload["transmission"]
+                          >,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select transmission" />
@@ -989,7 +1125,14 @@ if (editListingImages.length > 0) {
                     <Label>Body Type</Label>
                     <Select
                       value={vehicleDetails.body_type}
-                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, body_type: value as NonNullable<VehicleDetailsPayload['body_type']> })}
+                      onValueChange={(value) =>
+                        setVehicleDetails({
+                          ...vehicleDetails,
+                          body_type: value as NonNullable<
+                            VehicleDetailsPayload["body_type"]
+                          >,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select body type" />
@@ -1007,16 +1150,27 @@ if (editListingImages.length > 0) {
                     <Label>Ownership</Label>
                     <Select
                       value={vehicleDetails.ownership}
-                      onValueChange={(value) => setVehicleDetails({ ...vehicleDetails, ownership: value as NonNullable<VehicleDetailsPayload['ownership']> })}
+                      onValueChange={(value) =>
+                        setVehicleDetails({
+                          ...vehicleDetails,
+                          ownership: value as NonNullable<
+                            VehicleDetailsPayload["ownership"]
+                          >,
+                        })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select ownership" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="FIRST_OWNER">First owner</SelectItem>
-                        <SelectItem value="SECOND_OWNER">Second owner</SelectItem>
+                        <SelectItem value="SECOND_OWNER">
+                          Second owner
+                        </SelectItem>
                         <SelectItem value="THIRD_OWNER">Third owner</SelectItem>
-                        <SelectItem value="FOURTH_OWNER_PLUS">Fourth owner+</SelectItem>
+                        <SelectItem value="FOURTH_OWNER_PLUS">
+                          Fourth owner+
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1030,7 +1184,12 @@ if (editListingImages.length > 0) {
                       type="number"
                       placeholder="e.g. 2021"
                       value={vehicleDetails.year}
-                      onChange={(e) => setVehicleDetails({ ...vehicleDetails, year: e.target.value ? Number(e.target.value) : '' })}
+                      onChange={(e) =>
+                        setVehicleDetails({
+                          ...vehicleDetails,
+                          year: e.target.value ? Number(e.target.value) : "",
+                        })
+                      }
                     />
                   </div>
                   <div className="grid gap-2">
@@ -1040,14 +1199,25 @@ if (editListingImages.length > 0) {
                       type="number"
                       placeholder="e.g. 35000"
                       value={vehicleDetails.kilometers}
-                      onChange={(e) => setVehicleDetails({ ...vehicleDetails, kilometers: e.target.value ? Number(e.target.value) : '' })}
+                      onChange={(e) =>
+                        setVehicleDetails({
+                          ...vehicleDetails,
+                          kilometers: e.target.value
+                            ? Number(e.target.value)
+                            : "",
+                        })
+                      }
                     />
                   </div>
                 </div>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={isCreating}>
+              <Button
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+                disabled={isCreating}
+              >
                 Cancel
               </Button>
               <Button onClick={handleCreateListing} disabled={isCreating}>
@@ -1056,7 +1226,9 @@ if (editListingImages.length > 0) {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating...
                   </>
-                ) : 'Create Listing'}
+                ) : (
+                  "Create Listing"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1071,7 +1243,7 @@ if (editListingImages.length > 0) {
           <SelectContent>
             {typeFilters.map((type) => (
               <SelectItem key={type} value={type}>
-                {type === 'All' ? 'All Types' : type}
+                {type === "All" ? "All Types" : type}
               </SelectItem>
             ))}
           </SelectContent>
@@ -1083,7 +1255,7 @@ if (editListingImages.length > 0) {
           <SelectContent>
             {statusFilters.map((status) => (
               <SelectItem key={status} value={status}>
-                {status === 'All' ? 'All Status' : status}
+                {status === "All" ? "All Status" : status}
               </SelectItem>
             ))}
           </SelectContent>
@@ -1102,7 +1274,7 @@ if (editListingImages.length > 0) {
             searchKey="lst_title"
             searchPlaceholder="Search listings..."
           />
-          
+
           {/* Pagination Controls */}
           <div className="flex items-center justify-between px-2 py-4">
             <div className="text-sm text-muted-foreground">
@@ -1112,7 +1284,7 @@ if (editListingImages.length > 0) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={!pagination.hasPrevPage || isLoadingListings}
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
@@ -1124,7 +1296,7 @@ if (editListingImages.length > 0) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => prev + 1)}
+                onClick={() => setCurrentPage((prev) => prev + 1)}
                 disabled={!pagination.hasNextPage || isLoadingListings}
               >
                 Next
@@ -1144,8 +1316,8 @@ if (editListingImages.length > 0) {
         variant="destructive"
         onConfirm={() => {
           if (selectedListing) {
-            toast.success('Listing deleted successfully')
-            setDeleteOpen(false)
+            toast.success("Listing deleted successfully");
+            setDeleteOpen(false);
           }
         }}
       />
@@ -1167,21 +1339,34 @@ if (editListingImages.length > 0) {
                   id="edit_lst_title"
                   placeholder="e.g., 2024 Hyundai Creta SX"
                   value={editFormData.lst_title}
-                  onChange={(e) => setEditFormData({ ...editFormData, lst_title: e.target.value })}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      lst_title: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit_lst_category_id">Category *</Label>
                 <Select
                   value={editFormData.lst_category_id}
-                  onValueChange={(value) => setEditFormData({ ...editFormData, lst_category_id: value })}
+                  onValueChange={(value) =>
+                    setEditFormData({ ...editFormData, lst_category_id: value })
+                  }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={isLoadingCategories ? "Loading..." : "Select category"} />
+                    <SelectValue
+                      placeholder={
+                        isLoadingCategories ? "Loading..." : "Select category"
+                      }
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1194,7 +1379,12 @@ if (editListingImages.length > 0) {
                 id="edit_lst_description"
                 placeholder="Mint condition, single owner, 5000km driven..."
                 value={editFormData.lst_description}
-                onChange={(e) => setEditFormData({ ...editFormData, lst_description: e.target.value })}
+                onChange={(e) =>
+                  setEditFormData({
+                    ...editFormData,
+                    lst_description: e.target.value,
+                  })
+                }
               />
             </div>
 
@@ -1203,7 +1393,9 @@ if (editListingImages.length > 0) {
                 <Label htmlFor="edit_lst_type">Listing Type *</Label>
                 <Select
                   value={editFormData.lst_type}
-                  onValueChange={(value: 'BUY_NOW' | 'AUCTION') => setEditFormData({ ...editFormData, lst_type: value })}
+                  onValueChange={(value: "BUY_NOW" | "AUCTION") =>
+                    setEditFormData({ ...editFormData, lst_type: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1216,85 +1408,115 @@ if (editListingImages.length > 0) {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="edit_lst_price">
-                  {editFormData.lst_type === 'AUCTION' ? 'Starting Price (₹) *' : 'Fixed Price (₹) *'}
+                  {editFormData.lst_type === "AUCTION"
+                    ? "Starting Price (₹) *"
+                    : "Fixed Price (₹) *"}
                 </Label>
                 <Input
                   id="edit_lst_price"
                   type="number"
                   placeholder="0"
-                  value={editFormData.lst_price || ''}
-                  onChange={(e) => setEditFormData({ ...editFormData, lst_price: Number(e.target.value) })}
+                  value={editFormData.lst_price || ""}
+                  onChange={(e) =>
+                    setEditFormData({
+                      ...editFormData,
+                      lst_price: Number(e.target.value),
+                    })
+                  }
                 />
               </div>
             </div>
 
-<div className="grid gap-2">
-  <Label>Edit Images</Label>
+            <div className="grid gap-2">
+              <Label>Edit Images</Label>
 
-  {existingImages.length > 0 && (
-    <div className="flex flex-wrap gap-2">
-      {existingImages.map((img: any) => (
-        <div key={img.file_id} className="relative">
-          <img
-            src={img.file_signed_url}
-            className="w-20 h-20 object-cover rounded-md"
-          />
+              {existingImages.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {existingImages.map((img: any) => (
+                    <div key={img.file_id} className="relative">
+                      <img
+                        src={img.file_signed_url}
+                        className="w-20 h-20 object-cover rounded-md"
+                      />
 
-          <button
-            type="button"
-            onClick={() => handleDeleteImage(img.file_id)}
-            className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-1 text-xs"
-          >
-            ×
-          </button>
-        </div>
-      ))}
-    </div>
-  )}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteImage(img.file_id)}
+                        className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-1 text-xs"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-  <input
-    type="file"
-    multiple
-    accept="image/png,image/jpeg,image/jpg"
-    onChange={(e) => {
-      if (!e.target.files) return
-      setEditListingImages(Array.from(e.target.files))
-    }}
-  />
-</div>
+              <input
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/jpg"
+                onChange={(e) => {
+                  if (!e.target.files) return;
+                  setEditListingImages(Array.from(e.target.files));
+                }}
+              />
+            </div>
 
-            {editFormData.lst_type === 'AUCTION' && (
+            {editFormData.lst_type === "AUCTION" && (
               <div className="grid grid-cols-2 gap-4 border-l-4 border-primary pl-4 py-2 bg-primary/5 rounded-r-md">
                 <div className="grid gap-2">
-                  <Label htmlFor="edit_lst_auction_end">Auction End Time *</Label>
+                  <Label htmlFor="edit_lst_auction_end">
+                    Auction End Time *
+                  </Label>
                   <Input
                     id="edit_lst_auction_end"
                     type="datetime-local"
                     value={editFormData.lst_auction_end}
-                    onChange={(e) => setEditFormData({ ...editFormData, lst_auction_end: e.target.value })}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        lst_auction_end: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="edit_lst_min_increment">Min Bid Increment (₹)</Label>
+                  <Label htmlFor="edit_lst_min_increment">
+                    Min Bid Increment (₹)
+                  </Label>
                   <Input
                     id="edit_lst_min_increment"
                     type="number"
                     placeholder="e.g. 5000"
-                    value={editFormData.lst_min_increment || ''}
-                    onChange={(e) => setEditFormData({ ...editFormData, lst_min_increment: Number(e.target.value) })}
+                    value={editFormData.lst_min_increment || ""}
+                    onChange={(e) =>
+                      setEditFormData({
+                        ...editFormData,
+                        lst_min_increment: Number(e.target.value),
+                      })
+                    }
                   />
                 </div>
               </div>
             )}
 
             <div className="grid gap-4 border rounded-md p-4">
-              <Label className="text-sm font-semibold">Vehicle Details (optional)</Label>
+              <Label className="text-sm font-semibold">
+                Vehicle Details (optional)
+              </Label>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Fuel Type</Label>
                   <Select
                     value={editVehicleDetails.fuel_type}
-                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, fuel_type: value as NonNullable<VehicleDetailsPayload['fuel_type']> })}
+                    onValueChange={(value) =>
+                      setEditVehicleDetails({
+                        ...editVehicleDetails,
+                        fuel_type: value as NonNullable<
+                          VehicleDetailsPayload["fuel_type"]
+                        >,
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select fuel type" />
@@ -1311,7 +1533,14 @@ if (editListingImages.length > 0) {
                   <Label>Transmission</Label>
                   <Select
                     value={editVehicleDetails.transmission}
-                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, transmission: value as NonNullable<VehicleDetailsPayload['transmission']> })}
+                    onValueChange={(value) =>
+                      setEditVehicleDetails({
+                        ...editVehicleDetails,
+                        transmission: value as NonNullable<
+                          VehicleDetailsPayload["transmission"]
+                        >,
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select transmission" />
@@ -1329,7 +1558,14 @@ if (editListingImages.length > 0) {
                   <Label>Body Type</Label>
                   <Select
                     value={editVehicleDetails.body_type}
-                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, body_type: value as NonNullable<VehicleDetailsPayload['body_type']> })}
+                    onValueChange={(value) =>
+                      setEditVehicleDetails({
+                        ...editVehicleDetails,
+                        body_type: value as NonNullable<
+                          VehicleDetailsPayload["body_type"]
+                        >,
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select body type" />
@@ -1347,7 +1583,14 @@ if (editListingImages.length > 0) {
                   <Label>Ownership</Label>
                   <Select
                     value={editVehicleDetails.ownership}
-                    onValueChange={(value) => setEditVehicleDetails({ ...editVehicleDetails, ownership: value as NonNullable<VehicleDetailsPayload['ownership']> })}
+                    onValueChange={(value) =>
+                      setEditVehicleDetails({
+                        ...editVehicleDetails,
+                        ownership: value as NonNullable<
+                          VehicleDetailsPayload["ownership"]
+                        >,
+                      })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select ownership" />
@@ -1356,7 +1599,9 @@ if (editListingImages.length > 0) {
                       <SelectItem value="FIRST_OWNER">First owner</SelectItem>
                       <SelectItem value="SECOND_OWNER">Second owner</SelectItem>
                       <SelectItem value="THIRD_OWNER">Third owner</SelectItem>
-                      <SelectItem value="FOURTH_OWNER_PLUS">Fourth owner+</SelectItem>
+                      <SelectItem value="FOURTH_OWNER_PLUS">
+                        Fourth owner+
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1370,7 +1615,12 @@ if (editListingImages.length > 0) {
                     type="number"
                     placeholder="e.g. 2021"
                     value={editVehicleDetails.year}
-                    onChange={(e) => setEditVehicleDetails({ ...editVehicleDetails, year: e.target.value ? Number(e.target.value) : '' })}
+                    onChange={(e) =>
+                      setEditVehicleDetails({
+                        ...editVehicleDetails,
+                        year: e.target.value ? Number(e.target.value) : "",
+                      })
+                    }
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1380,14 +1630,25 @@ if (editListingImages.length > 0) {
                     type="number"
                     placeholder="e.g. 35000"
                     value={editVehicleDetails.kilometers}
-                    onChange={(e) => setEditVehicleDetails({ ...editVehicleDetails, kilometers: e.target.value ? Number(e.target.value) : '' })}
+                    onChange={(e) =>
+                      setEditVehicleDetails({
+                        ...editVehicleDetails,
+                        kilometers: e.target.value
+                          ? Number(e.target.value)
+                          : "",
+                      })
+                    }
                   />
                 </div>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)} disabled={isEditing}>
+            <Button
+              variant="outline"
+              onClick={() => setEditOpen(false)}
+              disabled={isEditing}
+            >
               Cancel
             </Button>
             <Button onClick={handleEditListing} disabled={isEditing}>
@@ -1396,11 +1657,13 @@ if (editListingImages.length > 0) {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Updating...
                 </>
-              ) : 'Update Listing'}
+              ) : (
+                "Update Listing"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
