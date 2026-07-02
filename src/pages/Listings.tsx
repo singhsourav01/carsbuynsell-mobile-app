@@ -1016,7 +1016,9 @@ if (editListingImages.length > 0) {
                         <SelectItem value="FIRST_OWNER">First owner</SelectItem>
                         <SelectItem value="SECOND_OWNER">Second owner</SelectItem>
                         <SelectItem value="THIRD_OWNER">Third owner</SelectItem>
-                        <SelectItem value="FOURTH_OWNER_PLUS">Fourth owner+</SelectItem>
+                        <SelectItem value="FOURTH_OWNER">Fourth owner</SelectItem>
+                        <SelectItem value="FIFTH_OWNER">Fifth owner</SelectItem>
+                        <SelectItem value="SIXTH_OWNER">Sixth owner</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1356,7 +1358,9 @@ if (editListingImages.length > 0) {
                       <SelectItem value="FIRST_OWNER">First owner</SelectItem>
                       <SelectItem value="SECOND_OWNER">Second owner</SelectItem>
                       <SelectItem value="THIRD_OWNER">Third owner</SelectItem>
-                      <SelectItem value="FOURTH_OWNER_PLUS">Fourth owner+</SelectItem>
+                      <SelectItem value="FOURTH_OWNER">Fourth owner</SelectItem>
+                      <SelectItem value="FIFTH_OWNER">Fifth owner</SelectItem>
+                      <SelectItem value="SIXTH_OWNER">Sixth owner</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
