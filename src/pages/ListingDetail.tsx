@@ -108,9 +108,21 @@ export default function ListingDetail() {
     setIsEditing(false)
   }
 
-  const handleDelete = () => {
-    toast.success('Listing deleted')
-    navigate('/listings')
+  const handleDelete = async () => {
+    if (!listing) return
+    try {
+      await apiClient.delete(
+        `https://admin.carsbuynsell.com/api/user/listings/${listing.lst_id}`
+      )
+      toast.success('Listing deleted successfully')
+      navigate('/listings')
+    } catch (error: any) {
+      console.error('Error deleting listing:', error)
+      toast.error(
+        error.response?.data?.message ||
+        'Failed to delete listing'
+      )
+    }
   }
 
   return (

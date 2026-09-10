@@ -1144,10 +1144,22 @@ if (editListingImages.length > 0) {
         description={`Are you sure you want to delete "${selectedListing?.lst_title}"?`}
         confirmLabel="Delete"
         variant="destructive"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (selectedListing) {
-            toast.success('Listing deleted successfully')
-            setDeleteOpen(false)
+            try {
+              await apiClient.delete(
+                `https://admin.carsbuynsell.com/api/user/listings/${selectedListing.lst_id}`
+              )
+              toast.success('Listing deleted successfully')
+              setDeleteOpen(false)
+              fetchListings(currentPage)
+            } catch (error: any) {
+              console.error('Error deleting listing:', error)
+              toast.error(
+                error.response?.data?.message ||
+                'Failed to delete listing'
+              )
+            }
           }
         }}
       />
