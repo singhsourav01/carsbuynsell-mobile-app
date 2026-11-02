@@ -7,9 +7,10 @@ import { Listing } from '@/types/listing-types'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
 import { Badge } from '@/components/ui/badge'
-import { Eye, ExternalLink, IndianRupee, Loader2, ChevronLeft, ChevronRight, Car, Users } from 'lucide-react'
+import { Eye, ExternalLink, IndianRupee, Loader2, ChevronLeft, ChevronRight, Car, Users, ClipboardList } from 'lucide-react'
+import { BuyNowRequest, fetchBuyNowRequests, requestStatusClass } from '@/services/buy-now-requests'
 
-function BuyNowCard({ listing, currentPage }: { listing: Listing; currentPage: number }) {
+function BuyNowCard({ listing, currentPage, requestCount }: { listing: Listing; currentPage: number; requestCount: number }) {
   const navigate = useNavigate()
 
   const firstImage = listing.user_portfolio?.[0]?.file_signed_url || listing.images?.[0]?.limg_url
@@ -51,6 +52,10 @@ function BuyNowCard({ listing, currentPage }: { listing: Listing; currentPage: n
                 <p className="font-semibold">{listing.lst_view_count || 0}</p>
               </div>
               <div>
+                <p className="text-gray-500">Requests</p>
+                <p className="font-semibold">{requestCount}</p>
+              </div>
+              <div>
                 <p className="text-gray-500">Created</p>
                 <p className="font-semibold">{dayjs(listing.lst_created_at).format('DD MMM')}</p>
               </div>
@@ -73,6 +78,8 @@ export default function BuyNow() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [buyNowListings, setBuyNowListings] = useState<Listing[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [requests, setRequests] = useState<BuyNowRequest[]>([])
+  const navigate = useNavigate()
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10)
 
@@ -106,6 +113,20 @@ export default function BuyNow() {
     fetchBuyNowListings(currentPage)
   }, [currentPage])
 
+  useEffect(() => {
+    fetchBuyNowRequests()
+      .then(setRequests)
+      .catch((error) => {
+        console.error('Failed to fetch buy now requests:', error)
+        toast.error('Failed to load buy now requests')
+      })
+  }, [])
+
+  const requestCounts = requests.reduce<Record<string, number>>((acc, r) => {
+    acc[r.ord_listing_id] = (acc[r.ord_listing_id] || 0) + 1
+    return acc
+  }, {})
+
   const totalPages = Math.ceil(pagination.count / pagination.take)
   const activeCount = buyNowListings.filter((listing) => listing.lst_status === 'ACTIVE').length
   const totalViews = buyNowListings.reduce((acc, listing) => acc + (listing.lst_view_count || 0), 0)
@@ -128,7 +149,7 @@ export default function BuyNow() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">Active Listings</CardTitle>
@@ -149,6 +170,18 @@ export default function BuyNow() {
             <div className="flex items-center gap-2">
               <Eye className="h-5 w-5 text-primary" />
               <p className="text-2xl font-bold">{totalViews}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Buy Now Requests</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-primary" />
+              <p className="text-2xl font-bold">{requests.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -181,7 +214,12 @@ export default function BuyNow() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {buyNowListings.map((listing) => (
-              <BuyNowCard key={listing.lst_id} listing={listing} currentPage={currentPage} />
+              <BuyNowCard
+                key={listing.lst_id}
+                listing={listing}
+                currentPage={currentPage}
+                requestCount={requestCounts[listing.lst_id] || 0}
+              />
             ))}
           </div>
         )}
@@ -211,6 +249,55 @@ export default function BuyNow() {
             </Button>
           </div>
         )}
+      </div>
+
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Recent Buy Now Requests ({requests.length})</h2>
+        <Card>
+          <CardContent className="p-0 overflow-x-auto">
+            {requests.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No buy now requests yet</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-left text-gray-500">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Vehicle</th>
+                    <th className="px-4 py-3 font-medium">Buyer</th>
+                    <th className="px-4 py-3 font-medium">Amount</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Requested</th>
+                    <th className="px-4 py-3 font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {requests.map((r) => (
+                    <tr key={r.ord_id} className="border-t">
+                      <td className="px-4 py-3 font-medium">{r.listing?.lst_title}</td>
+                      <td className="px-4 py-3">
+                        <p>{r.buyer?.user_full_name || 'Unknown'}</p>
+                        <p className="text-xs text-gray-500">{r.buyer?.user_email}</p>
+                      </td>
+                      <td className="px-4 py-3">₹{Number(r.ord_amount || 0).toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <Badge className={requestStatusClass(r.ord_status)}>{r.ord_status}</Badge>
+                      </td>
+                      <td className="px-4 py-3">{dayjs(r.ord_created_at).format('DD MMM YYYY, hh:mm A')}</td>
+                      <td className="px-4 py-3">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/buy-now/${r.ord_listing_id}?from=${currentPage}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

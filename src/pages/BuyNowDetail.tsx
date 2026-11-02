@@ -7,6 +7,7 @@ import { apiClient } from '@/services/api-client'
 import { Listing } from '@/types/listing-types'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
+import { BuyNowRequest, fetchBuyNowRequests, requestStatusClass } from '@/services/buy-now-requests'
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, IndianRupee, Loader2, Tag, User } from 'lucide-react'
 
 export default function BuyNowDetail() {
@@ -18,6 +19,7 @@ export default function BuyNowDetail() {
   const [listing, setListing] = useState<Listing | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [requests, setRequests] = useState<BuyNowRequest[]>([])
 
   const handleBack = () => {
     navigate(`/buy-now?page=${fromPage}`)
@@ -38,6 +40,12 @@ export default function BuyNowDetail() {
     }
 
     if (id) fetchBuyNowDetail()
+  }, [id])
+
+  useEffect(() => {
+    fetchBuyNowRequests()
+      .then((all) => setRequests(all.filter((r) => r.ord_listing_id === id)))
+      .catch((error) => console.error('Failed to fetch buy now requests:', error))
   }, [id])
 
   if (isLoading) {
@@ -243,6 +251,28 @@ export default function BuyNowDetail() {
               <Button variant="outline" className="w-full mt-4" onClick={() => navigate(`/users/${listing.lst_seller_id}`)}>
                 View Seller Profile
               </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Buy Now Requests ({requests.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {requests.length === 0 ? (
+                <p className="text-sm text-gray-500">No requests yet</p>
+              ) : (
+                requests.map((r) => (
+                  <div key={r.ord_id} className="flex items-start justify-between gap-2 border-b pb-3 last:border-0 last:pb-0">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{r.buyer?.user_full_name || 'Unknown'}</p>
+                      <p className="text-xs text-gray-500 truncate">{r.buyer?.user_email}</p>
+                      <p className="text-xs text-gray-500">{dayjs(r.ord_created_at).format('DD MMM YYYY, hh:mm A')}</p>
+                    </div>
+                    <Badge className={requestStatusClass(r.ord_status)}>{r.ord_status}</Badge>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 
