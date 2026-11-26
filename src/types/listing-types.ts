@@ -138,3 +138,35 @@ export interface AuctionDetail extends Auction {
     total_participants: number
     total_bids: number
 }
+
+// Buy Now types (admin detail: GET /admin/buy-now/:id)
+export interface BuyNowUser {
+    user_id: string
+    user_full_name: string
+    user_email: string
+    user_primary_phone: string
+    user_profile_image_file_id: string | null
+}
+
+export interface BuyNowRequestRow {
+    ord_id: string
+    ord_amount: string
+    ord_status: string
+    ord_created_at: string
+    buyer: BuyNowUser
+}
+
+export interface BuyNowParticipant {
+    user: BuyNowUser
+    engagement_status: string
+    joined_at: string
+    request_amount: number
+    request_status: string | null
+}
+
+export interface BuyNowDetailData extends Listing {
+    requests: BuyNowRequestRow[]
+    participants: BuyNowParticipant[]
+    total_requests: number
+    total_participants: number
+}

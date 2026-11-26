@@ -4,11 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/services/api-client'
-import { Listing } from '@/types/listing-types'
+import { BuyNowDetailData } from '@/types/listing-types'
 import { toast } from 'sonner'
 import dayjs from 'dayjs'
-import { BuyNowRequest, fetchBuyNowRequests, requestStatusClass } from '@/services/buy-now-requests'
-import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, IndianRupee, Loader2, Tag, User } from 'lucide-react'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import { requestStatusClass } from '@/services/buy-now-requests'
+import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, Eye, IndianRupee, Loader2, ShoppingCart, Tag, User, Users } from 'lucide-react'
+
+dayjs.extend(relativeTime)
 
 export default function BuyNowDetail() {
   const { id } = useParams()
@@ -16,10 +19,9 @@ export default function BuyNowDetail() {
   const [searchParams] = useSearchParams()
   const fromPage = searchParams.get('from') || '1'
 
-  const [listing, setListing] = useState<Listing | null>(null)
+  const [listing, setListing] = useState<BuyNowDetailData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [requests, setRequests] = useState<BuyNowRequest[]>([])
 
   const handleBack = () => {
     navigate(`/buy-now?page=${fromPage}`)
@@ -40,12 +42,6 @@ export default function BuyNowDetail() {
     }
 
     if (id) fetchBuyNowDetail()
-  }, [id])
-
-  useEffect(() => {
-    fetchBuyNowRequests()
-      .then((all) => setRequests(all.filter((r) => r.ord_listing_id === id)))
-      .catch((error) => console.error('Failed to fetch buy now requests:', error))
   }, [id])
 
   if (isLoading) {
@@ -170,11 +166,16 @@ export default function BuyNowDetail() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
               <div className="text-center p-4 bg-surface rounded-lg">
                 <IndianRupee className="h-5 w-5 mx-auto text-primary" />
                 <p className="mt-2 text-xl font-bold">₹{Number(listing.lst_price || 0).toLocaleString()}</p>
                 <p className="text-sm text-gray-500">Fixed Price</p>
+              </div>
+              <div className="text-center p-4 bg-surface rounded-lg">
+                <ShoppingCart className="h-5 w-5 mx-auto text-primary" />
+                <p className="mt-2 text-xl font-bold">{listing.total_requests || 0}</p>
+                <p className="text-sm text-gray-500">Total Requests</p>
               </div>
               <div className="text-center p-4 bg-surface rounded-lg">
                 <Eye className="h-5 w-5 mx-auto text-primary" />
@@ -256,28 +257,6 @@ export default function BuyNowDetail() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Buy Now Requests ({requests.length})</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {requests.length === 0 ? (
-                <p className="text-sm text-gray-500">No requests yet</p>
-              ) : (
-                requests.map((r) => (
-                  <div key={r.ord_id} className="flex items-start justify-between gap-2 border-b pb-3 last:border-0 last:pb-0">
-                    <div className="min-w-0">
-                      <p className="font-medium truncate">{r.buyer?.user_full_name || 'Unknown'}</p>
-                      <p className="text-xs text-gray-500 truncate">{r.buyer?.user_email}</p>
-                      <p className="text-xs text-gray-500">{dayjs(r.ord_created_at).format('DD MMM YYYY, hh:mm A')}</p>
-                    </div>
-                    <Badge className={requestStatusClass(r.ord_status)}>{r.ord_status}</Badge>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
               <CardTitle className="text-lg">Listing Stats</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -296,6 +275,115 @@ export default function BuyNowDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Participants Section */}
+        {listing.participants && listing.participants.length > 0 && (
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Participants ({listing.total_participants})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Participant</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Phone</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Slot Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Request Amount</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listing.participants.map((participant, index) => (
+                      <tr key={participant.user.user_id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 font-medium text-sm">
+                              {index + 1}
+                            </div>
+                            <span className="font-medium">{participant.user.user_full_name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-500">{participant.user.user_email}</td>
+                        <td className="py-3 px-4 text-gray-500">{participant.user.user_primary_phone}</td>
+                        <td className="py-3 px-4">
+                          <Badge variant={participant.engagement_status === 'ACTIVE' ? 'active' : 'outline'}>
+                            {participant.engagement_status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 font-semibold">₹{participant.request_amount.toLocaleString()}</td>
+                        <td className="py-3 px-4 text-gray-500">{dayjs(participant.joined_at).format('DD MMM, hh:mm A')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Buy Now History (the Buy Now equivalent of an auction's Bid History) */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Buy Now History ({listing.total_requests})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {listing.requests && listing.requests.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">#</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Buyer</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Email</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Phone</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Amount</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Status</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listing.requests.map((r, index) => (
+                      <tr key={r.ord_id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-full ${index === 0 ? 'bg-green-100 text-green-600' : 'bg-gray-100'} font-medium text-sm`}>
+                            {index + 1}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-medium">{r.buyer?.user_full_name || 'Unknown'}</td>
+                        <td className="py-3 px-4 text-gray-500">{r.buyer?.user_email}</td>
+                        <td className="py-3 px-4 text-gray-500">{r.buyer?.user_primary_phone}</td>
+                        <td className="py-3 px-4 font-semibold">₹{Number(r.ord_amount).toLocaleString()}</td>
+                        <td className="py-3 px-4">
+                          <Badge className={requestStatusClass(r.ord_status)}>{r.ord_status}</Badge>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="text-sm">{dayjs(r.ord_created_at).format('DD MMM, hh:mm A')}</p>
+                            <p className="text-xs text-gray-400">{dayjs(r.ord_created_at).fromNow()}</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <ShoppingCart className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                <p>No Buy Now requests yet</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
