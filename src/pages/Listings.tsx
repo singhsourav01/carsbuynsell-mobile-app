@@ -489,7 +489,8 @@ if (editListingImages.length > 0) {
       lst_category_id: listing.lst_category_id || listing.category?.cat_id || '',
       lst_type: listing.lst_type || 'BUY_NOW',
       lst_price: Number(listing.lst_price) || 0,
-      lst_auction_end: listing.lst_auction_end ? new Date(listing.lst_auction_end).toISOString().slice(0, 16) : '',
+      // datetime-local expects LOCAL time; toISOString() is UTC and shifted the time by the timezone offset
+      lst_auction_end: listing.lst_auction_end ? dayjs(listing.lst_auction_end).format('YYYY-MM-DDTHH:mm') : '',
       lst_min_increment: Number(listing.lst_min_increment) || 0,
     })
     const vd = listing.vehicle_details
