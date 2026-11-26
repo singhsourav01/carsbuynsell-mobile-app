@@ -184,7 +184,8 @@ export default function BuyNowDetail() {
               </div>
               <div className="text-center p-4 bg-surface rounded-lg">
                 <Calendar className="h-5 w-5 mx-auto text-primary" />
-                <p className="mt-2 text-xl font-bold">{dayjs(listing.lst_updated_at).format('DD MMM')}</p>
+                <p className="mt-2 text-xl font-bold">{dayjs(listing.lst_updated_at).format('DD MMM YYYY')}</p>
+                <p className="text-sm font-medium text-gray-700">{dayjs(listing.lst_updated_at).format('hh:mm A')}</p>
                 <p className="text-sm text-gray-500">Updated</p>
               </div>
             </div>
@@ -270,7 +271,11 @@ export default function BuyNowDetail() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-500">Created At</span>
-                <span className="font-medium">{dayjs(listing.lst_created_at).format('DD MMM YYYY')}</span>
+                <span className="font-medium">{dayjs(listing.lst_created_at).format('DD MMM YYYY, hh:mm A')}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500">Last Updated</span>
+                <span className="font-medium">{dayjs(listing.lst_updated_at).format('DD MMM YYYY, hh:mm A')}</span>
               </div>
             </CardContent>
           </Card>
